@@ -6,7 +6,7 @@
   <title>Shadow Agent Protocol: NovaSmart - IT Intern Onboarding Simulation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Press+Start+2P&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Press+Start+2P&family=Share+Tech+Mono&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-dark: #0a0e17;
@@ -21,6 +21,23 @@
       --text-muted: #8492a6;
       --flash-gold: #ffd700;
       --accent-purple: #9d4edd;
+
+      /* Google Cloud Console Theme Palette */
+      --gcp-header: #1f1f1f;
+      --gcp-nav-bg: #18191c;
+      --gcp-main-bg: #121212;
+      --gcp-card-bg: #1e1e1e;
+      --gcp-border: #303134;
+      --gcp-blue: #1a73e8;
+      --gcp-blue-hover: #1b66c9;
+      --gcp-text: #e8eaed;
+      --gcp-text-muted: #9aa0a6;
+      --gcp-danger: #ea4335;
+      --gcp-danger-bg: rgba(234, 67, 53, 0.15);
+      --gcp-warn: #f9ab00;
+      --gcp-warn-bg: rgba(249, 171, 0, 0.15);
+      --gcp-success: #34a853;
+      --gcp-success-bg: rgba(52, 168, 83, 0.15);
     }
 
     * {
@@ -44,14 +61,14 @@
 
     /* Flash Player Window Container */
     #flash-container {
-      width: 1320px;
-      height: 840px;
+      width: 1400px;
+      height: 870px;
       max-width: 98vw;
       max-height: 98vh;
       background: var(--bg-dark);
       border: 3px solid #3b4252;
       border-radius: 8px;
-      box-shadow: 0 0 40px rgba(0, 240, 255, 0.15), 0 20px 50px rgba(0,0,0,0.8);
+      box-shadow: 0 0 45px rgba(0, 240, 255, 0.15), 0 20px 50px rgba(0,0,0,0.8);
       display: flex;
       flex-direction: column;
       position: relative;
@@ -61,7 +78,7 @@
 
     /* Flash Title Bar */
     .flash-titlebar {
-      height: 34px;
+      height: 36px;
       background: linear-gradient(180deg, #374151 0%, #1f2937 100%);
       border-bottom: 2px solid #111827;
       display: flex;
@@ -72,6 +89,7 @@
       font-size: 9px;
       color: #93c5fd;
       letter-spacing: 0.5px;
+      flex-shrink: 0;
     }
 
     .flash-title-left {
@@ -106,8 +124,41 @@
 
     .flash-controls {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
+    }
+
+    /* Primary View Mode Switcher (Flash vs Split vs Cloud Console) */
+    .view-mode-selector {
+      display: flex;
+      background: #0f172a;
+      border: 1px solid #00f0ff;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-right: 6px;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    }
+    .view-mode-btn {
+      background: transparent;
+      border: none;
+      color: #93c5fd;
+      padding: 3px 9px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .view-mode-btn:hover {
+      background: #1e293b;
+      color: #fff;
+    }
+    .view-mode-btn.active {
+      background: #0284c7;
+      color: #fff;
+      font-weight: bold;
     }
 
     .flash-btn-mini {
@@ -129,55 +180,27 @@
       color: #00f0ff;
     }
 
-    /* Layout Preset Toggle Buttons */
-    .layout-toggle-group {
-      display: flex;
-      background: #111827;
-      border: 1px solid #374151;
-      border-radius: 4px;
-      overflow: hidden;
-      margin-right: 4px;
-    }
-    .layout-btn {
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      padding: 2px 7px;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 10px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .layout-btn:hover {
-      color: #fff;
-      background: #1f2937;
-    }
-    .layout-btn.active {
-      background: #0284c7;
-      color: #fff;
-      font-weight: bold;
-    }
-
     /* HUD Top Bar */
     .game-hud {
-      height: 64px;
+      height: 60px;
       background: var(--bg-panel);
       border-bottom: 2px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 16px;
-      gap: 16px;
+      padding: 0 14px;
+      gap: 14px;
+      flex-shrink: 0;
     }
 
     .mission-indicator {
       display: flex;
       flex-direction: column;
       gap: 2px;
-      min-width: 280px;
+      min-width: 270px;
     }
     .mission-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--primary-cyan);
       display: flex;
@@ -192,7 +215,7 @@
     /* On-Screen Mission Objectives Checklist */
     .quest-checklist {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       align-items: center;
       background: #0b1120;
       border: 1px solid #1e293b;
@@ -217,14 +240,14 @@
     /* Threat & Harm Gauges */
     .gauges-container {
       display: flex;
-      gap: 16px;
+      gap: 14px;
       align-items: center;
     }
     .gauge-block {
       display: flex;
       flex-direction: column;
       gap: 3px;
-      width: 175px;
+      width: 165px;
     }
     .gauge-label {
       display: flex;
@@ -234,7 +257,7 @@
       font-family: 'Press Start 2P', cursive;
     }
     .gauge-bar-wrap {
-      height: 10px;
+      height: 9px;
       background: #0f172a;
       border: 1px solid #334155;
       border-radius: 2px;
@@ -267,7 +290,7 @@
     .score-badge {
       background: #0f172a;
       border: 1px solid var(--neon-green);
-      padding: 6px 10px;
+      padding: 5px 9px;
       border-radius: 4px;
       font-family: 'Press Start 2P', cursive;
       font-size: 9px;
@@ -276,40 +299,109 @@
       white-space: nowrap;
     }
 
-    /* Main Play Arena Layout Styles */
+    /* Master Workspace Split/View Container */
+    #workspaceViewContainer {
+      flex: 1;
+      display: flex;
+      width: 100%;
+      height: calc(100% - 96px);
+      overflow: hidden;
+      position: relative;
+      background: #060913;
+    }
+
+    /* Mode: Flash Layout */
+    .viewmode-flash #playArena {
+      display: grid !important;
+      width: 100% !important;
+    }
+    .viewmode-flash #gcpConsoleContainer {
+      display: none !important;
+    }
+
+    /* Mode: Split Layout (Canvas Left, Google Cloud Console Right) */
+    .viewmode-split {
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      display: flex !important;
+      width: 100% !important;
+      scroll-behavior: smooth;
+    }
+    .viewmode-split #playArena {
+      display: flex !important;
+      flex-direction: column !important;
+      width: 580px !important;
+      min-width: 580px !important;
+      flex-shrink: 0 !important;
+      border-right: 2px solid #334155;
+    }
+    .viewmode-split #playArena .sidebar-panel {
+      display: none !important; /* In split mode, the right pane is the real GCP console! */
+    }
+    .viewmode-split #playArena .stage-wrapper {
+      flex: 1 !important;
+      min-height: 280px !important;
+    }
+    .viewmode-split #playArena .bottom-panel {
+      height: 190px !important;
+      display: grid !important;
+      grid-template-columns: 240px 1fr !important;
+    }
+    .viewmode-split #gcpConsoleContainer {
+      display: flex !important;
+      flex: 1 !important;
+      min-width: 820px !important;
+      flex-shrink: 0 !important;
+    }
+
+    /* Scrollbars for Horizontal Scrolling */
+    #workspaceViewContainer::-webkit-scrollbar,
+    .gcp-main-stage::-webkit-scrollbar,
+    .gcp-table-wrap::-webkit-scrollbar {
+      height: 10px;
+      width: 10px;
+    }
+    #workspaceViewContainer::-webkit-scrollbar-track,
+    .gcp-main-stage::-webkit-scrollbar-track,
+    .gcp-table-wrap::-webkit-scrollbar-track {
+      background: #090d16;
+      border-top: 1px solid #1e293b;
+    }
+    #workspaceViewContainer::-webkit-scrollbar-thumb,
+    .gcp-main-stage::-webkit-scrollbar-thumb,
+    .gcp-table-wrap::-webkit-scrollbar-thumb {
+      background: #2a3854;
+      border-radius: 5px;
+      border: 1px solid #3b4d6e;
+    }
+    #workspaceViewContainer::-webkit-scrollbar-thumb:hover,
+    .gcp-main-stage::-webkit-scrollbar-thumb:hover,
+    .gcp-table-wrap::-webkit-scrollbar-thumb:hover {
+      background: #00f0ff;
+      box-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+    }
+
+    /* Mode: Full Google Cloud Console Layout */
+    .viewmode-console #playArena {
+      display: none !important;
+    }
+    .viewmode-console #gcpConsoleContainer {
+      display: flex !important;
+      width: 100% !important;
+    }
+
+    /* Retro Flash Play Arena */
     .play-arena {
       flex: 1;
       display: grid;
+      grid-template-columns: 1fr 430px;
+      grid-template-rows: 1fr 200px;
       gap: 8px;
       padding: 8px;
       background: #060913;
       position: relative;
       overflow: hidden;
-      transition: all 0.25s ease;
-    }
-
-    /* Balanced Layout (Default) */
-    .play-arena.layout-balanced {
-      grid-template-columns: 1fr 430px;
-      grid-template-rows: 1fr 200px;
-    }
-
-    /* Focus Stage Layout */
-    .play-arena.layout-stage {
-      grid-template-columns: 1fr 310px;
-      grid-template-rows: 1fr 125px;
-    }
-
-    /* Focus Console Layout */
-    .play-arena.layout-console {
-      grid-template-columns: 1fr 370px;
-      grid-template-rows: 1fr 310px;
-    }
-
-    /* Focus Deck Layout */
-    .play-arena.layout-deck {
-      grid-template-columns: 1fr 600px;
-      grid-template-rows: 1fr 165px;
+      transition: all 0.2s ease;
     }
 
     /* Central Stage: Topology Canvas */
@@ -326,7 +418,7 @@
     }
 
     .stage-header {
-      height: 30px;
+      height: 28px;
       background: var(--bg-subpanel);
       border-bottom: 1px solid var(--border-color);
       display: flex;
@@ -335,21 +427,6 @@
       padding: 0 10px;
       font-size: 11px;
       color: #94a3b8;
-    }
-
-    .panel-scale-btn {
-      background: transparent;
-      border: 1px solid #334155;
-      color: #38bdf8;
-      border-radius: 3px;
-      padding: 1px 6px;
-      font-size: 10px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .panel-scale-btn:hover {
-      background: #0284c7;
-      color: #fff;
     }
 
     #topologyCanvas {
@@ -361,15 +438,14 @@
       cursor: crosshair;
     }
 
-    /* Canvas Legend */
     .canvas-legend {
       position: absolute;
-      bottom: 10px;
-      left: 10px;
-      background: rgba(17, 24, 39, 0.88);
+      bottom: 8px;
+      left: 8px;
+      background: rgba(17, 24, 39, 0.9);
       border: 1px solid #334155;
       border-radius: 4px;
-      padding: 6px 10px;
+      padding: 5px 9px;
       font-size: 10px;
       display: flex;
       gap: 12px;
@@ -403,7 +479,6 @@
       align-items: center;
       background: var(--bg-subpanel);
       border-bottom: 1px solid var(--border-color);
-      padding-right: 6px;
     }
     .sidebar-tab {
       flex: 1;
@@ -459,16 +534,9 @@
       color: var(--text-main);
       font-weight: 600;
     }
-    .val-danger {
-      color: var(--alert-red) !important;
-      font-weight: bold;
-    }
-    .val-warn {
-      color: var(--warning-amber) !important;
-    }
-    .val-ok {
-      color: var(--neon-green) !important;
-    }
+    .val-danger { color: var(--alert-red) !important; font-weight: bold; }
+    .val-warn { color: var(--warning-amber) !important; }
+    .val-ok { color: var(--neon-green) !important; }
 
     /* Action Toolkit Cards */
     .tools-grid {
@@ -480,30 +548,24 @@
       background: #1e293b;
       border: 1px solid #334155;
       border-radius: 4px;
-      padding: 10px;
+      padding: 9px;
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       flex-direction: column;
       gap: 4px;
-      position: relative;
     }
-    .tool-card:hover:not(.disabled) {
+    .tool-card:hover {
       border-color: var(--primary-cyan);
       background: #233249;
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0, 240, 255, 0.15);
     }
-    .tool-card.disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-      border-style: dashed;
-    }
     .tool-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: #f1f5f9;
     }
@@ -514,7 +576,7 @@
     }
     .tool-badge {
       font-size: 9px;
-      padding: 2px 6px;
+      padding: 2px 5px;
       border-radius: 3px;
       font-weight: bold;
     }
@@ -534,7 +596,7 @@
       grid-column: 1;
       grid-row: 2;
       display: grid;
-      grid-template-columns: 330px 1fr;
+      grid-template-columns: 310px 1fr;
       gap: 8px;
     }
 
@@ -543,16 +605,16 @@
       background: var(--bg-panel);
       border: 1px solid var(--border-color);
       border-radius: 4px;
-      padding: 10px;
+      padding: 9px;
       display: flex;
-      gap: 10px;
+      gap: 9px;
       align-items: flex-start;
       overflow: hidden;
       position: relative;
     }
     .mentor-avatar {
-      width: 52px;
-      height: 52px;
+      width: 48px;
+      height: 48px;
       background: #1e1b4b;
       border: 2px solid var(--accent-purple);
       border-radius: 6px;
@@ -560,14 +622,12 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 0 10px rgba(157, 78, 221, 0.4);
       flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(157, 78, 221, 0.4);
     }
     .mentor-avatar-face {
       font-family: 'Press Start 2P', cursive;
-      font-size: 16px;
+      font-size: 15px;
       color: #c084fc;
       animation: botPulse 2s infinite ease-in-out;
     }
@@ -588,19 +648,17 @@
       justify-content: space-between;
     }
     .mentor-name {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       color: #c084fc;
       letter-spacing: 0.5px;
     }
-
-    /* Dynamic Recovery Hint Button */
     .mentor-hint-btn {
       background: #1e1b4b;
       border: 1px solid #c084fc;
       color: #e9d5ff;
       border-radius: 4px;
-      padding: 2px 7px;
+      padding: 2px 6px;
       font-family: 'Share Tech Mono', monospace;
       font-size: 10px;
       font-weight: bold;
@@ -613,7 +671,6 @@
     .mentor-hint-btn:hover {
       background: #7c3aed;
       color: #fff;
-      box-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
     }
     .mentor-hint-btn.pulsing {
       background: #831843;
@@ -625,7 +682,6 @@
       0% { transform: scale(1); box-shadow: 0 0 4px #f43f5e; }
       100% { transform: scale(1.05); box-shadow: 0 0 12px #f43f5e; }
     }
-
     .hint-count-pill {
       background: #7c3aed;
       color: white;
@@ -633,12 +689,11 @@
       border-radius: 3px;
       font-size: 9px;
     }
-
     .mentor-text {
       font-size: 11px;
       color: #cbd5e1;
       line-height: 1.35;
-      height: 80px;
+      height: 75px;
       overflow-y: auto;
     }
 
@@ -672,9 +727,7 @@
       gap: 3px;
       color: #94a3b8;
     }
-    .log-line {
-      word-break: break-all;
-    }
+    .log-line { word-break: break-all; }
     .log-info { color: #38bdf8; }
     .log-success { color: var(--neon-green); }
     .log-warn { color: var(--warning-amber); }
@@ -703,7 +756,6 @@
       font-family: 'Fira Code', monospace;
       font-size: 11px;
     }
-
     .quick-cmd-bar {
       display: flex;
       gap: 6px;
@@ -728,6 +780,318 @@
       color: #fff;
     }
 
+    /* =====================================================================
+       SIMULATED GOOGLE CLOUD CONSOLE ("NOVACLOUD CONSOLE") STYLES
+       ===================================================================== */
+    #gcpConsoleContainer {
+      display: none;
+      flex-direction: column;
+      background: var(--gcp-main-bg);
+      font-family: 'Roboto', sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* GCP Top Navigation Bar */
+    .gcp-header {
+      height: 48px;
+      background: var(--gcp-header);
+      border-bottom: 1px solid var(--gcp-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+    }
+    .gcp-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .gcp-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #fff;
+      cursor: pointer;
+    }
+    .gcp-logo-icon {
+      font-size: 18px;
+    }
+    .gcp-project-selector {
+      background: #2c2d30;
+      border: 1px solid #444746;
+      border-radius: 4px;
+      padding: 4px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #c4c7c5;
+      cursor: pointer;
+    }
+    .gcp-project-selector:hover {
+      background: #36373a;
+    }
+
+    .gcp-search-wrap {
+      flex: 1;
+      max-width: 500px;
+      margin: 0 20px;
+      position: relative;
+    }
+    .gcp-search-input {
+      width: 100%;
+      background: #2d2e31;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 6px 12px 6px 34px;
+      color: #e8eaed;
+      font-size: 13px;
+      outline: none;
+    }
+    .gcp-search-input:focus {
+      background: #37393d;
+      border-color: var(--gcp-blue);
+    }
+    .gcp-search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9aa0a6;
+      font-size: 13px;
+    }
+
+    .gcp-header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .gcp-icon-btn {
+      background: transparent;
+      border: none;
+      color: #c4c7c5;
+      font-size: 15px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .gcp-icon-btn:hover {
+      background: #303134;
+      color: #fff;
+    }
+    .gcp-avatar {
+      width: 28px;
+      height: 28px;
+      background: #8ab4f8;
+      color: #121212;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    /* GCP Body & Navigation Rail */
+    .gcp-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    .gcp-nav-rail {
+      width: 220px;
+      background: var(--gcp-nav-bg);
+      border-right: 1px solid var(--gcp-border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+    .gcp-nav-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--gcp-text-muted);
+      padding: 14px 16px 6px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    .gcp-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      font-size: 13px;
+      color: #c4c7c5;
+      cursor: pointer;
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+    }
+    .gcp-nav-item:hover {
+      background: #232427;
+      color: #fff;
+    }
+    .gcp-nav-item.active {
+      background: rgba(26, 115, 232, 0.12);
+      color: #8ab4f8;
+      border-left-color: var(--gcp-blue);
+      font-weight: 500;
+    }
+    .gcp-nav-badge {
+      margin-left: auto;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    /* GCP Content Workspace */
+    .gcp-main-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--gcp-main-bg);
+      overflow-y: auto;
+      overflow-x: auto;
+      padding: 18px 24px;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .gcp-breadcrumb-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--gcp-text-muted);
+    }
+    .gcp-breadcrumb-bar span {
+      cursor: pointer;
+    }
+    .gcp-breadcrumb-bar span:hover {
+      color: #8ab4f8;
+    }
+
+    .gcp-page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .gcp-page-title {
+      font-size: 20px;
+      font-weight: 500;
+      color: #e8eaed;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .gcp-action-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .gcp-btn {
+      background: var(--gcp-blue);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .gcp-btn:hover {
+      background: var(--gcp-blue-hover);
+    }
+    .gcp-btn-secondary {
+      background: #28292c;
+      color: #c4c7c5;
+      border: 1px solid var(--gcp-border);
+    }
+    .gcp-btn-secondary:hover {
+      background: #333438;
+      color: #fff;
+    }
+
+    /* GCP Material Data Tables */
+    .gcp-card {
+      background: var(--gcp-card-bg);
+      border: 1px solid var(--gcp-border);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .gcp-card-header {
+      padding: 12px 16px;
+      background: #232427;
+      border-bottom: 1px solid var(--gcp-border);
+      font-size: 13px;
+      font-weight: 500;
+      color: #e8eaed;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .gcp-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .gcp-table {
+      width: 100%;
+      min-width: 680px;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+    .gcp-table th {
+      background: #232427;
+      color: var(--gcp-text-muted);
+      font-weight: 500;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--gcp-border);
+    }
+    .gcp-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #28292c;
+      color: #e8eaed;
+      vertical-align: middle;
+    }
+    .gcp-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .gcp-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .pill-success { background: var(--gcp-success-bg); color: var(--gcp-success); border: 1px solid var(--gcp-success); }
+    .pill-danger { background: var(--gcp-danger-bg); color: var(--gcp-danger); border: 1px solid var(--gcp-danger); }
+    .pill-warn { background: var(--gcp-warn-bg); color: var(--gcp-warn); border: 1px solid var(--gcp-warn); }
+    .pill-neutral { background: #2c2d30; color: #9aa0a6; border: 1px solid #444746; }
+
     /* Modal Windows */
     .modal-overlay {
       position: absolute;
@@ -749,7 +1113,6 @@
       opacity: 1;
       pointer-events: auto;
     }
-
     .modal-box {
       width: 700px;
       max-width: 92%;
@@ -766,7 +1129,6 @@
       from { transform: translateY(30px) scale(0.95); opacity: 0; }
       to { transform: translateY(0) scale(1); opacity: 1; }
     }
-
     .modal-header {
       background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
       padding: 12px 16px;
@@ -816,7 +1178,6 @@
       background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
       box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
     }
-
     .btn-success {
       background: linear-gradient(180deg, #059669 0%, #047857 100%);
       border-color: #34d399;
@@ -826,7 +1187,6 @@
       box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
     }
 
-    /* Scorecard Table in Modal */
     .scorecard-table {
       width: 100%;
       border-collapse: collapse;
@@ -845,9 +1205,7 @@
       border: 1px solid #1e293b;
       color: #e2e8f0;
     }
-    .scorecard-table tr:nth-child(even) {
-      background: #0b1120;
-    }
+    .scorecard-table tr:nth-child(even) { background: #0b1120; }
 
     /* CRT Scanline Overlay Effect */
     .crt-overlay {
@@ -866,7 +1224,7 @@
     /* Attack Notification Toast */
     .toast-alert {
       position: absolute;
-      top: 80px;
+      top: 75px;
       left: 50%;
       transform: translateX(-50%) translateY(-20px);
       background: rgba(220, 38, 38, 0.95);
@@ -905,12 +1263,11 @@
         <div class="save-indicator"><div class="save-dot"></div><span>💾 AUTOSAVE</span></div>
       </div>
       <div class="flash-controls">
-        <!-- Panel Layout Scale Selector -->
-        <div class="layout-toggle-group" title="Scale and enlarge panels to your preference">
-          <button class="layout-btn active" id="btnLayoutBalanced" onclick="setLayoutMode('balanced')">◫ Balanced</button>
-          <button class="layout-btn" id="btnLayoutStage" onclick="setLayoutMode('stage')">⬚ Focus Stage</button>
-          <button class="layout-btn" id="btnLayoutConsole" onclick="setLayoutMode('console')">▤ Focus Console</button>
-          <button class="layout-btn" id="btnLayoutDeck" onclick="setLayoutMode('deck')">▥ Focus Deck</button>
+        <!-- View Mode Switcher: Flash HUD, Cloud Console, and Split -->
+        <div class="view-mode-selector" title="Switch between Flash HUD, Cloud Console, and Split View">
+          <button class="view-mode-btn" id="btnViewFlash" onclick="setViewMode('flash')">🕹️ Flash HUD</button>
+          <button class="view-mode-btn" id="btnViewConsole" onclick="setViewMode('console')">🌐 Cloud Console</button>
+          <button class="view-mode-btn active" id="btnViewSplit" onclick="setViewMode('split')">🔲 Split</button>
         </div>
 
         <button class="flash-btn-mini" id="btnToggleSound" onclick="toggleAudio()">🔊 SFX: ON</button>
@@ -962,81 +1319,144 @@
       </div>
     </div>
 
-    <!-- Active Gameplay Arena -->
-    <div class="play-arena layout-balanced" id="playArena">
-      <!-- Center: Interactive Topology Graph Canvas -->
-      <div class="stage-wrapper">
-        <div class="stage-header">
-          <span>VIRTUAL AGENT ESTATE TOPOLOGY (REGION: us-west1)</span>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span id="canvasStats">4 ACTIVE WORKLOADS // 1 DATA PLATFORM</span>
-            <button class="panel-scale-btn" onclick="togglePanelFocus('stage')">⤢ Enlarge</button>
-          </div>
-        </div>
-        <canvas id="topologyCanvas"></canvas>
-        <div class="canvas-legend">
-          <div class="legend-item"><div class="legend-dot" style="background:#00ff9d;"></div> Sanctioned</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#ff3366;"></div> Shadow IT / Rogue</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#00f0ff;"></div> Gateway / Storage</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#ffb700;"></div> Shared Account</div>
-        </div>
-      </div>
+    <!-- Unified Master Viewport Container (Hosts both Flash Arena & Google Cloud Console) -->
+    <div id="workspaceViewContainer" class="viewmode-split">
 
-      <!-- Right: Inspector & Remediation Deck -->
-      <div class="sidebar-panel">
-        <div class="sidebar-tabs">
-          <div class="sidebar-tab active" id="tabInspect" onclick="switchSidebarTab('inspect')">NODE INSPECTOR</div>
-          <div class="sidebar-tab" id="tabTools" onclick="switchSidebarTab('tools')">REMEDIATION DECK</div>
-          <div class="sidebar-tab" id="tabLogs" onclick="switchSidebarTab('logs')">AUDIT VAULT</div>
-          <button class="panel-scale-btn" style="margin-left:auto;" onclick="togglePanelFocus('deck')">⤢ Enlarge</button>
-        </div>
-
-        <div class="sidebar-content" id="sidebarContent">
-          <!-- Populated dynamically via JS -->
-        </div>
-      </div>
-
-      <!-- Bottom Arena: Dialogue & Terminal -->
-      <div class="bottom-panel">
-        <!-- Mentor NPC Box with Progressive Recovery Hint Button -->
-        <div class="mentor-box">
-          <div class="mentor-avatar">
-            <div class="mentor-avatar-face" id="mentorEmoji">🤖</div>
-          </div>
-          <div class="mentor-speech">
-            <div class="mentor-header">
-              <span class="mentor-name">A.G.Y.-4000 [PLATFORM ARCHITECT]</span>
-              <button class="mentor-hint-btn" id="btnMentorHint" onclick="showMentorHint()" title="Get targeted guidance">
-                💡 HINT <span class="hint-count-pill" id="hintBadge">1/3</span>
-              </button>
-            </div>
-            <div class="mentor-text" id="mentorText">
-              Initializing virtual sandbox... Welcome to NovaSmart, intern! Check the estate topology. Something on Cloud Run is running without an entry in our Agent Registry. Run a sweep!
-            </div>
-          </div>
-        </div>
-
-        <!-- Terminal & Quick Command Bar -->
-        <div class="terminal-box">
-          <div class="terminal-bar">
-            <span>NOVASMART CLOUD SHELL (SANDBOXED)</span>
+      <!-- Left / Primary: Retro Flash Play Arena -->
+      <div class="play-arena" id="playArena">
+        <!-- Topology Canvas -->
+        <div class="stage-wrapper">
+          <div class="stage-header">
+            <span>VIRTUAL AGENT ESTATE TOPOLOGY (REGION: us-west1)</span>
             <div style="display:flex; align-items:center; gap:8px;">
-              <span>STATUS: CONNECTED</span>
-              <button class="panel-scale-btn" onclick="togglePanelFocus('console')">⤢ Enlarge</button>
+              <span id="canvasStats">4 ACTIVE WORKLOADS // 1 DATA PLATFORM</span>
+              <button class="flash-btn-mini" onclick="setViewMode('split')">🔲 Split</button>
             </div>
           </div>
-          <div class="terminal-output" id="termOutput">
-            <div class="log-line log-info">NovaSmart Cloud Environment initialized. Type 'help' or click quick actions below.</div>
+          <canvas id="topologyCanvas"></canvas>
+          <div class="canvas-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#00ff9d;"></div> Sanctioned</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ff3366;"></div> Shadow IT / Rogue</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#00f0ff;"></div> Gateway / Storage</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ffb700;"></div> Shared Account</div>
           </div>
-          <div class="quick-cmd-bar" id="quickCmdBar">
-            <!-- Dynamic quick action chips -->
+        </div>
+
+        <!-- Right: Inspector & Remediation Deck (Hidden in Split Mode to show real GCP console) -->
+        <div class="sidebar-panel">
+          <div class="sidebar-tabs">
+            <div class="sidebar-tab active" id="tabInspect" onclick="switchSidebarTab('inspect')">NODE INSPECTOR</div>
+            <div class="sidebar-tab" id="tabTools" onclick="switchSidebarTab('tools')">REMEDIATION DECK</div>
+            <div class="sidebar-tab" id="tabLogs" onclick="switchSidebarTab('logs')">AUDIT VAULT</div>
           </div>
-          <div class="terminal-input-wrap">
-            <span class="terminal-prompt">&gt;</span>
-            <input type="text" id="termInput" class="terminal-input" placeholder="Enter gcloud, bq or audit command..." autocomplete="off">
+          <div class="sidebar-content" id="sidebarContent">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- Bottom: Mentor & Terminal -->
+        <div class="bottom-panel">
+          <div class="mentor-box">
+            <div class="mentor-avatar">
+              <div class="mentor-avatar-face" id="mentorEmoji">🤖</div>
+            </div>
+            <div class="mentor-speech">
+              <div class="mentor-header">
+                <span class="mentor-name">A.G.Y.-4000 [ARCHITECT]</span>
+                <button class="mentor-hint-btn" id="btnMentorHint" onclick="showMentorHint()" title="Get targeted guidance">
+                  💡 HINT <span class="hint-count-pill" id="hintBadge">1/3</span>
+                </button>
+              </div>
+              <div class="mentor-text" id="mentorText">
+                Initializing virtual sandbox... Welcome to NovaSmart, intern! Check the estate topology. Something on Cloud Run is running without an entry in our Agent Registry. Run a sweep!
+              </div>
+            </div>
+          </div>
+
+          <div class="terminal-box">
+            <div class="terminal-bar">
+              <span>NOVASMART CLOUD SHELL (SANDBOXED)</span>
+              <span>STATUS: CONNECTED</span>
+            </div>
+            <div class="terminal-output" id="termOutput">
+              <div class="log-line log-info">NovaSmart Cloud Environment initialized. Type 'help' or click quick actions below.</div>
+            </div>
+            <div class="quick-cmd-bar" id="quickCmdBar">
+              <!-- Dynamic quick action chips -->
+            </div>
+            <div class="terminal-input-wrap">
+              <span class="terminal-prompt">&gt;</span>
+              <input type="text" id="termInput" class="terminal-input" placeholder="Enter gcloud, bq or audit command..." autocomplete="off">
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- Right / Secondary: High-Fidelity Google Cloud Console ("NovaCloud Console") -->
+      <div id="gcpConsoleContainer">
+        <!-- GCP Header -->
+        <div class="gcp-header">
+          <div class="gcp-header-left">
+            <div class="gcp-logo" onclick="ConsoleEngine.navigateTo('registry')">
+              <span class="gcp-logo-icon">☁️</span>
+              <span>Google Cloud</span>
+            </div>
+            <div class="gcp-project-selector" title="Active Project">
+              <span>📁 novasmart-prod-01 (nvst-prod-9402)</span>
+              <span>▼</span>
+            </div>
+          </div>
+
+          <div class="gcp-search-wrap">
+            <span class="gcp-search-icon">🔍</span>
+            <input type="text" class="gcp-search-input" placeholder="Search resources, services, and products (e.g., IAM, Cloud Run, Model Armor)..." onkeyup="handleConsoleSearch(this.value)">
+          </div>
+
+          <div class="gcp-header-right">
+            <button class="gcp-icon-btn" title="Cloud Shell" onclick="focusCloudShell()">&gt;_</button>
+            <button class="gcp-icon-btn" title="Notifications">🔔</button>
+            <button class="gcp-icon-btn" title="Documentation">❓</button>
+            <div class="gcp-avatar" title="intern@novasmart.internal">IN</div>
+          </div>
+        </div>
+
+        <!-- GCP Body -->
+        <div class="gcp-body">
+          <!-- Left Navigation Rail -->
+          <div class="gcp-nav-rail">
+            <div class="gcp-nav-section-title">Agentic AI Platform</div>
+            <div class="gcp-nav-item active" id="navItemRegistry" onclick="ConsoleEngine.navigateTo('registry')">
+              <span>🤖</span> <span>Agent Registry</span>
+              <span class="gcp-nav-badge pill-neutral" id="badgeRegistryCount">3 / 4</span>
+            </div>
+            <div class="gcp-nav-item" id="navItemVertex" onclick="ConsoleEngine.navigateTo('vertex')">
+              <span>🧠</span> <span>Reasoning Engines</span>
+            </div>
+            <div class="gcp-nav-item" id="navItemModelArmor" onclick="ConsoleEngine.navigateTo('modelarmor')">
+              <span>🛡️</span> <span>Model Armor</span>
+            </div>
+
+            <div class="gcp-nav-section-title">Compute & Security</div>
+            <div class="gcp-nav-item" id="navItemCloudRun" onclick="ConsoleEngine.navigateTo('cloudrun')">
+              <span>🏃</span> <span>Cloud Run</span>
+              <span class="gcp-nav-badge pill-warn" id="badgeCloudRun">1 Svc</span>
+            </div>
+            <div class="gcp-nav-item" id="navItemIAM" onclick="ConsoleEngine.navigateTo('iam')">
+              <span>👥</span> <span>IAM & Admin</span>
+              <span class="gcp-nav-badge pill-danger" id="badgeIAM">Shared SA</span>
+            </div>
+            <div class="gcp-nav-item" id="navItemBigQuery" onclick="ConsoleEngine.navigateTo('bigquery')">
+              <span>📜</span> <span>BigQuery Audit Logs</span>
+            </div>
+          </div>
+
+          <!-- Main Console Stage -->
+          <div class="gcp-main-stage" id="gcpMainStage">
+            <!-- Dynamically populated via ConsoleEngine.renderPage() -->
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Attack / Warning Toast Alert -->
@@ -1069,9 +1489,9 @@
        ===================================================================== */
 
     const MAX_LOSS_CAP = 100000; // $100K Corporate Tolerance Capacity Ceiling
-    const SAVE_KEY = 'NOVASMART_SHADOW_AGENT_SAVE_V2';
+    const SAVE_KEY = 'NOVASMART_SHADOW_AGENT_SAVE_V3';
 
-    // Web Audio Synthesizer for Authentic Flash SFX
+    // Web Audio Synthesizer
     const AudioEngine = {
       ctx: null,
       enabled: true,
@@ -1132,25 +1552,20 @@
       document.getElementById('btnToggleScanlines').innerText = isOn ? '📺 CRT: OFF' : '📺 CRT: ON';
     }
 
-    /* Panel Scaling & Layout Modes */
-    let currentLayout = 'balanced';
-    function setLayoutMode(mode) {
-      currentLayout = mode;
-      const arena = document.getElementById('playArena');
-      arena.className = `play-arena layout-${mode}`;
-      document.querySelectorAll('.layout-btn').forEach(btn => btn.classList.remove('active'));
-      const activeBtn = document.getElementById(`btnLayout${mode.charAt(0).toUpperCase() + mode.slice(1)}`);
+    /* Primary View Mode Switcher: Flash vs Split vs Cloud Console */
+    let activeViewMode = 'split'; // Default to Split View to highlight Google Cloud Console
+    function setViewMode(mode) {
+      activeViewMode = mode;
+      const container = document.getElementById('workspaceViewContainer');
+      container.className = `viewmode-${mode}`;
+
+      document.querySelectorAll('.view-mode-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`btnView${mode.charAt(0).toUpperCase() + mode.slice(1)}`);
       if (activeBtn) activeBtn.classList.add('active');
+
       AudioEngine.click();
       setTimeout(resizeCanvas, 150);
-    }
-
-    function togglePanelFocus(panelName) {
-      if (currentLayout === panelName) {
-        setLayoutMode('balanced');
-      } else {
-        setLayoutMode(panelName);
-      }
+      ConsoleEngine.renderPage();
     }
 
     // Game Levels Definition (M0, M1, M2, M3, M5)
@@ -1161,7 +1576,7 @@
         name: "SEE EVERYTHING",
         subtitle: "Audit runtime estate vs Google Cloud Agent Registry",
         description: "NovaSmart's estate hosts 3 cataloged agents, but Cloud Run logs report unmonitored compute traffic. Discover the shadow workload and investigate who is accessing our customer database.",
-        mentorDialogue: "Intern, check the topology map. Agent Registry shows 3 workloads, but Cloud Run is running something outside central oversight. Run a sweep command or click the workload node to inspect it!",
+        mentorDialogue: "Intern, look at the Google Cloud Console on the right or the canvas on the left. In Agent Registry, we have 3 workloads, but on Cloud Run there's an uncataloged container! Open Cloud Run or Agent Registry in the console to inspect it!",
         targetChecks: { sweptCatalog: false, sweptRuntime: false, inspectedAuditLogs: false },
         checklistLabels: {
           sweptCatalog: "Sweep Agent Registry catalog",
@@ -1170,8 +1585,8 @@
         },
         hints: [
           "Check what's running vs what's in the catalog. One of the Cloud Run workloads isn't on the official registry list.",
-          "Inspect the red node 'promo-agent-shadow' on the canvas. Notice who owns it and who its service account is.",
-          "Click the 'sweep-cloudrun' chip to reveal the shadow container, then click 'audit-data-access' to see both workloads using novasmart-customer-sa."
+          "In the Google Cloud Console, click 'Cloud Run' on the left navigation to see 'promo-agent-shadow'.",
+          "Click the 'sweep-cloudrun' chip or inspect BigQuery Audit Logs to observe both workloads using novasmart-customer-sa."
         ],
         blastRadius: 25,
         financialLoss: 0,
@@ -1183,7 +1598,7 @@
         name: "TAKE ACTION",
         subtitle: "Register Shadow IT & Enforce Workload Least Privilege",
         description: "Registering the shadow agent under marketing-ops establishes ownership on paper, but both agents still share a single DB Administrator service account (novasmart-customer-sa). Decouple their logins and scope BigQuery access!",
-        mentorDialogue: "Good job finding promo-agent-shadow! But merely registering it does NOT remediate the blast radius. They still share one master keycard (novasmart-customer-sa)! Split their identities!",
+        mentorDialogue: "Good job finding promo-agent-shadow! In the Google Cloud Console under Agent Registry, click '+ Register Agent' to claim it for marketing-ops. Then head to Cloud Run / IAM to decouple the shared service account!",
         targetChecks: { registeredShadow: false, decoupledIdentities: false, scopedPermissions: false },
         checklistLabels: {
           registeredShadow: "Register shadow agent in catalog",
@@ -1192,8 +1607,8 @@
         },
         hints: [
           "Merely registering an agent in the catalog makes it owned on paper, but leaves the shared credentials active.",
-          "Both promo-agent-shadow and Customer Personalization share novasmart-customer-sa with project-wide DB Admin authority.",
-          "In the Remediation Deck, first click 'Register in Agent Registry', then click 'Decouple Service Account' to mint dedicated identities."
+          "In the Google Cloud Console under Agent Registry, click '+ Register Agent' to assign owner 'marketing-ops'.",
+          "Then open 'Cloud Run' or 'IAM & Admin' in the console and click 'Decouple Identity' to assign promo-agent-sa."
         ],
         blastRadius: 45,
         financialLoss: 1200,
@@ -1205,7 +1620,7 @@
         name: "CONTROL CONNECTIONS",
         subtitle: "Lock Inbound Calling Perimeters & Narrow DB Verbs",
         description: "Our back-office Markdown Strategy Agent computes wholesale floor margins ($220.00). An unapproved 'test-agent-caller' and 13 broad project roles can invoke it directly! Lock inbound perimeters and attach the egress gateway.",
-        mentorDialogue: "Red alert! An unowned test credential is bypass-calling our back-office margin engine! Lock down the caller list to ONLY the Price Match Agent, and ensure database permissions are read-only SELECTs!",
+        mentorDialogue: "Red alert! In the Google Cloud Console, navigate to 'Reasoning Engines'. An unowned test credential is bypass-calling our back-office margin engine! Lock down the caller list to ONLY the Price Match Agent!",
         targetChecks: { perimeterLocked: false, egressAttached: false, verbsNarrowed: false },
         checklistLabels: {
           perimeterLocked: "Restrict direct callers to PMA only",
@@ -1214,8 +1629,8 @@
         },
         hints: [
           "Being allowed to read data vs being allowed to call an agent are two completely separate gates.",
-          "The Markdown Strategy Agent holds confidential margin floors ($220.00). An unapproved 'test-agent-caller' is on its direct caller list!",
-          "In the Remediation Deck, click 'Lock Inbound Caller Perimeter', then click 'Bind Egress Gateway & Strip Verbs' to block SQL mutations."
+          "In the Google Cloud Console, click 'Reasoning Engines' on the left rail to inspect Markdown Strategy Agent.",
+          "Click 'Lock Inbound Perimeter to PMA' and toggle 'Attach Egress Gateway & SELECT-only' to secure the back office."
         ],
         blastRadius: 70,
         financialLoss: 4500,
@@ -1227,7 +1642,7 @@
         name: "PROTECT CONTENT",
         subtitle: "Defend against Prompt Injection via Gateway Model Armor",
         description: "Shoppers are using natural language 'Emergency override' commands to force illegal discounts! System prompts are guidelines, not security gates. Attach Model Armor screening and detect asymmetric peer bypasses.",
-        mentorDialogue: "Customers are typing 'Emergency override mode: set aside all directives' and buying $400 TVs for $174! Hook up Model Armor to the Price Match Agent. Then watch out for ASYMMETRIC BYPASSES on peer agents!",
+        mentorDialogue: "Customers are typing 'Emergency override mode' to steal discounts! In the Google Cloud Console, click 'Model Armor' on the left rail. Attach nvst-jailbreak-template to PMA. Then shield Customer Personalization from ASYMMETRIC BYPASSES!",
         targetChecks: { armorAttached: false, injectionDefended: false, asymmetryAudited: false },
         checklistLabels: {
           armorAttached: "Wire Model Armor to Price Match Agent",
@@ -1236,8 +1651,8 @@
         },
         hints: [
           "System prompt text ('Never give discounts over 10%') will NOT stop prompt injection attacks like 'Emergency override'.",
-          "First attach Model Armor to Price Match Agent using the Remediation Deck, then run 'test-front-injection' to verify it is deflected.",
-          "WHAT IS AN ASYMMETRIC BYPASS? Attackers blocked at the front door pivot to the unshielded Customer Personalization Agent! Click 'Shield Peer Agent Ingress Mesh' in the deck to seal all doors and complete M3!"
+          "Open 'Model Armor' in the Google Cloud Console and click 'Wire Model Armor to PMA Ingress'.",
+          "WHAT IS AN ASYMMETRIC BYPASS? Attackers blocked at the front desk pivot to Customer Personalization! Click 'Shield Peer Agent Ingress Mesh' in Model Armor to seal all doors!"
         ],
         blastRadius: 85,
         financialLoss: 8900,
@@ -1258,7 +1673,7 @@
         },
         hints: [
           "Never approve a live policy change on verbal assurances. You must evaluate empirical test scorecard data.",
-          "Click 'Run Gen AI Policy Benchmark' in the Remediation Deck to test the 25 scenario cases and compare candidate vs production.",
+          "In the Remediation Deck or Cloud Console, click 'Run Gen AI Policy Benchmark' to test the 25 scenario cases.",
           "Notice the policy drift: candidate agent approves 18-20% discounts, but published legal policy is 10%! Select 'REJECT LAUNCH (NO-GO)' to save the company."
         ],
         blastRadius: 40,
@@ -1289,7 +1704,7 @@
           sa: 'pma-service-sa',
           roles: ['aiplatform.user'],
           gateway: 'None',
-          x: 220, y: 140, radius: 26,
+          x: 180, y: 130, radius: 24,
           status: 'ok',
           desc: 'Front-desk agent that verifies competitor pricing and answers customer discount requests.'
         },
@@ -1302,7 +1717,7 @@
           sa: 'novasmart-customer-sa (SHARED)',
           roles: ['bigquery.admin'],
           gateway: 'None',
-          x: 520, y: 140, radius: 26,
+          x: 420, y: 130, radius: 24,
           status: 'warn',
           desc: 'Reads customer loyalty tiers and historical order data to offer personalized coupons.'
         },
@@ -1315,7 +1730,7 @@
           sa: 'novasmart-customer-sa (SHARED)',
           roles: ['bigquery.admin (Project-wide)'],
           gateway: 'None',
-          x: 520, y: 290, radius: 28,
+          x: 420, y: 270, radius: 26,
           status: 'danger',
           desc: 'Shadow IT workload created by marketing-ops. Operates outside Agent Registry central catalog!'
         },
@@ -1328,7 +1743,7 @@
           sa: 'markdown-strategy-sa',
           roles: ['bigquery.admin'],
           gateway: 'None',
-          x: 220, y: 290, radius: 26,
+          x: 180, y: 270, radius: 24,
           status: 'warn',
           desc: 'Back-office reasoning engine holding confidential wholesale floor prices ($220.00 floor).'
         },
@@ -1341,7 +1756,7 @@
           sa: 'Internal Storage Tier',
           roles: ['Full PII Table Access'],
           gateway: 'None',
-          x: 370, y: 215, radius: 24,
+          x: 300, y: 200, radius: 22,
           status: 'storage',
           desc: 'Dataset holding customer names, lifetime values, emails, and purchasing history.'
         },
@@ -1354,7 +1769,7 @@
           sa: 'Platform Ingress Service',
           roles: ['content.screening'],
           gateway: 'Unattached',
-          x: 80, y: 140, radius: 22,
+          x: 65, y: 130, radius: 20,
           status: 'neutral',
           desc: 'Content inspection shield designed to intercept prompt-injection jailbreak payloads.'
         }
@@ -1377,6 +1792,565 @@
     };
 
     /* =====================================================================
+       SIMULATED GOOGLE CLOUD CONSOLE CONTROLLER ("ConsoleEngine")
+       ===================================================================== */
+    const ConsoleEngine = {
+      activePage: 'registry',
+
+      navigateTo(pageName) {
+        this.activePage = pageName;
+        document.querySelectorAll('.gcp-nav-item').forEach(item => item.classList.remove('active'));
+        const navEl = document.getElementById(`navItem${pageName.charAt(0).toUpperCase() + pageName.slice(1)}`);
+        if (navEl) navEl.classList.add('active');
+        AudioEngine.click();
+        this.renderPage();
+      },
+
+      renderPage() {
+        const stage = document.getElementById('gcpMainStage');
+        if (!stage) return;
+
+        // Update Nav Rail Badges
+        const curLvl = LEVELS[GameState.currentLevelIndex];
+        const isRegistered = curLvl.targetChecks.registeredShadow || GameState.nodes.find(n => n.id === 'promo_shadow').owner.includes('marketing-ops');
+        document.getElementById('badgeRegistryCount').innerText = isRegistered ? '4 / 4' : '3 / 4 (1 Shadow)';
+        document.getElementById('badgeRegistryCount').className = isRegistered ? 'gcp-nav-badge pill-success' : 'gcp-nav-badge pill-danger';
+
+        const isDecoupled = curLvl.targetChecks.decoupledIdentities || GameState.nodes.find(n => n.id === 'promo_shadow').sa.includes('DEDICATED');
+        document.getElementById('badgeIAM').innerText = isDecoupled ? 'Isolated' : 'Shared SA ⚠️';
+        document.getElementById('badgeIAM').className = isDecoupled ? 'gcp-nav-badge pill-success' : 'gcp-nav-badge pill-danger';
+
+        if (this.activePage === 'registry') this.renderRegistryPage(stage);
+        else if (this.activePage === 'cloudrun') this.renderCloudRunPage(stage);
+        else if (this.activePage === 'iam') this.renderIAMPage(stage);
+        else if (this.activePage === 'vertex') this.renderVertexPage(stage);
+        else if (this.activePage === 'modelarmor') this.renderModelArmorPage(stage);
+        else if (this.activePage === 'bigquery') this.renderBigQueryPage(stage);
+      },
+
+      openRegisterAgentModal() {
+        const shadow = GameState.nodes.find(n => n.id === 'promo_shadow');
+        const isRegistered = shadow.owner.includes('marketing-ops');
+
+        document.getElementById('modalTitle').innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="color:#1a73e8; font-size:18px;">🌐</span>
+            <span>Google Cloud Agent Registry &mdash; Register Agent</span>
+          </div>
+        `;
+
+        if (!isRegistered) {
+          document.getElementById('modalBody').innerHTML = `
+            <div style="font-size:13px; line-height:1.6; color:#e2e8f0;">
+              <p style="margin-bottom:12px;">Register an active agentic service into the centralized enterprise governance catalog (Region: <code style="color:#38bdf8;">us-west1</code>).</p>
+              
+              <div style="background:#0f172a; border:1px solid #334155; border-radius:6px; padding:12px; margin-bottom:12px;">
+                <div style="display:grid; grid-template-columns: 140px 1fr; gap:8px; font-size:12px;">
+                  <span style="color:#94a3b8;">Discovered Workload:</span>
+                  <span style="color:#f87171; font-weight:bold;">promo-agent-shadow (Cloud Run)</span>
+
+                  <span style="color:#94a3b8;">Service URL:</span>
+                  <span style="color:#cbd5e1;">https://promo-agent-shadow-4421-uw.a.run.app</span>
+
+                  <span style="color:#94a3b8;">Owner Team:</span>
+                  <span><input type="text" id="regOwnerInput" value="marketing-ops" style="background:#1e293b; border:1px solid #475569; color:#fff; padding:4px 8px; border-radius:4px; width:100%; font-family:monospace;" readonly></span>
+
+                  <span style="color:#94a3b8;">Initial Risk Tier:</span>
+                  <span style="color:#ea4335; font-weight:bold;">HIGH (Unvetted external prompts & shared DB access)</span>
+
+                  <span style="color:#94a3b8;">Governance SLA:</span>
+                  <span style="color:#cbd5e1;">Enterprise Tier 1 &bull; Continuous Attestation</span>
+                </div>
+              </div>
+
+              <div style="background:rgba(234, 67, 53, 0.1); border-left:3px solid #ea4335; padding:8px 12px; font-size:11px; color:#fca5a5;">
+                <strong>Security Notice:</strong> Registering brings this workload under enterprise inventory. Remediating its shared identity and service account must be completed in Cloud Run / IAM as the next step.
+              </div>
+            </div>
+          `;
+          document.getElementById('modalFooter').innerHTML = `
+            <button class="flash-btn-mini" onclick="closeModal()" style="padding:6px 14px;">CANCEL</button>
+            <button class="gcp-btn" style="background:#1a73e8; color:#fff; border:none; padding:6px 16px; font-weight:bold; cursor:pointer;" onclick="ConsoleEngine.confirmRegistration()">+ REGISTER WORKLOAD</button>
+          `;
+        } else {
+          document.getElementById('modalBody').innerHTML = `
+            <div style="font-size:13px; line-height:1.6; color:#e2e8f0;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; color:#34d399; font-weight:bold;">
+                <span>✓</span> <span>All Discovered Workloads are Registered</span>
+              </div>
+              <p>Every active service in region <code>us-west1</code> is cataloged under the Agent Registry:</p>
+              <ul style="margin:8px 0 12px 20px; font-size:12px; color:#cbd5e1;">
+                <li><strong>Price Match Agent</strong> (Retail Platform &bull; LOW)</li>
+                <li><strong>Customer Personalization Agent</strong> (Customer CRM &bull; MEDIUM)</li>
+                <li><strong>Markdown Strategy Agent</strong> (Finance Ops &bull; HIGH)</li>
+                <li><strong>promo-agent-shadow</strong> (marketing-ops &bull; HIGH RISK)</li>
+              </ul>
+              <p style="font-size:12px; color:#94a3b8;">To remediate permissions and service account isolation, proceed to <strong>Cloud Run</strong> or <strong>IAM &amp; Admin</strong>.</p>
+            </div>
+          `;
+          document.getElementById('modalFooter').innerHTML = `
+            <button class="gcp-btn" style="background:#1a73e8; color:#fff; border:none; padding:6px 16px; cursor:pointer;" onclick="closeModal()">DONE</button>
+          `;
+        }
+        document.getElementById('gameModal').classList.add('active');
+      },
+
+      confirmRegistration() {
+        closeModal();
+        applyRemediation('catalog_shadow');
+        this.renderPage();
+      },
+
+      renderRegistryPage(stage) {
+        const shadow = GameState.nodes.find(n => n.id === 'promo_shadow');
+        const isRegistered = shadow.owner.includes('marketing-ops');
+
+        stage.innerHTML = `
+          <div class="gcp-breadcrumb-bar">
+            <span>Agentic Platform</span> &gt; <span>Agent Registry</span> &gt; <span>Agents (us-west1)</span>
+          </div>
+
+          <div class="gcp-page-header">
+            <div class="gcp-page-title">
+              <span>🤖 Google Cloud Agent Registry</span>
+            </div>
+            <div class="gcp-action-bar">
+              <button class="gcp-btn" id="btnRegisterAgent" onclick="ConsoleEngine.openRegisterAgentModal()">
+                <span>+</span> <span>Register Agent</span>
+              </button>
+              ${isRegistered ? `
+                <span class="gcp-pill pill-success">✓ ALL WORKLOADS CATALOGED</span>
+              ` : `
+                <span class="gcp-pill pill-danger">1 UNREGISTERED WORKLOAD</span>
+              `}
+              <button class="gcp-btn gcp-btn-secondary" onclick="ConsoleEngine.renderPage()">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <div class="gcp-card">
+            <div class="gcp-card-header">
+              <span>Active Agent Estate (Region: us-west1)</span>
+              <span style="font-size:11px; color:#9aa0a6;">Single source of truth for sanctioned enterprise agents</span>
+            </div>
+
+            <div class="gcp-table-wrap">
+              <table class="gcp-table">
+                <thead>
+                  <tr>
+                    <th>Agent Name</th>
+                    <th>Status</th>
+                    <th>Runtime Environment</th>
+                    <th>Owner Team</th>
+                    <th>Risk Tier</th>
+                    <th>Service Account</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Price Match Agent</strong></td>
+                    <td><span class="gcp-pill pill-success">Active</span></td>
+                    <td>Managed agent runtime (us-west1)</td>
+                    <td>Retail Platform</td>
+                    <td><span class="gcp-pill pill-neutral">LOW</span></td>
+                    <td>pma-service-sa</td>
+                    <td><button class="gcp-btn gcp-btn-secondary" style="padding:2px 8px; font-size:11px;" onclick="ConsoleEngine.navigateTo('modelarmor')">Inspect Shield</button></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Customer Personalization Agent</strong></td>
+                    <td><span class="gcp-pill pill-success">Active</span></td>
+                    <td>Managed agent runtime (us-west1)</td>
+                    <td>Customer CRM</td>
+                    <td><span class="gcp-pill pill-warn">MEDIUM</span></td>
+                    <td><span style="color:${GameState.nodes.find(n => n.id === 'cust_personal').sa.includes('SHARED') ? '#ea4335' : '#34a853'}">${GameState.nodes.find(n => n.id === 'cust_personal').sa}</span></td>
+                    <td><button class="gcp-btn gcp-btn-secondary" style="padding:2px 8px; font-size:11px;" onclick="ConsoleEngine.navigateTo('iam')">Edit IAM</button></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Markdown Strategy Agent</strong></td>
+                    <td><span class="gcp-pill pill-success">Active</span></td>
+                    <td>Managed agent runtime (us-west1)</td>
+                    <td>Finance Ops</td>
+                    <td><span class="gcp-pill pill-danger">HIGH</span></td>
+                    <td>markdown-strategy-sa</td>
+                    <td><button class="gcp-btn gcp-btn-secondary" style="padding:2px 8px; font-size:11px;" onclick="ConsoleEngine.navigateTo('vertex')">Manage Perimeter</button></td>
+                  </tr>
+                  <tr style="background:${!isRegistered ? 'rgba(234, 67, 53, 0.08)' : 'transparent'};">
+                    <td><strong>promo-agent-shadow</strong> ${!isRegistered ? '<span style="color:#ea4335;">⚠️ (UNCATALOGED SHADOW IT)</span>' : ''}</td>
+                    <td>${!isRegistered ? '<span class="gcp-pill pill-danger">UNREGISTERED</span>' : '<span class="gcp-pill pill-success">Active</span>'}</td>
+                    <td>Cloud Run (us-west1)</td>
+                    <td>${shadow.owner}</td>
+                    <td><span class="gcp-pill pill-danger">HIGH</span></td>
+                    <td><span style="color:${shadow.sa.includes('SHARED') ? '#ea4335' : '#34a853'}">${shadow.sa}</span></td>
+                    <td>
+                      ${!isRegistered ? `
+                        <button class="gcp-btn" id="btnRegisterAgentRow" style="padding:3px 10px; font-size:11px;" onclick="ConsoleEngine.openRegisterAgentModal()">+ Register Agent</button>
+                      ` : `
+                        <button class="gcp-btn gcp-btn-secondary" style="padding:2px 8px; font-size:11px;" onclick="ConsoleEngine.navigateTo('cloudrun')">View Service</button>
+                      `}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      },
+
+      renderCloudRunPage(stage) {
+        const shadow = GameState.nodes.find(n => n.id === 'promo_shadow');
+        const isDecoupled = shadow.sa.includes('DEDICATED');
+
+        stage.innerHTML = `
+          <div class="gcp-breadcrumb-bar">
+            <span>Serverless</span> &gt; <span>Cloud Run</span> &gt; <span>Services (us-west1)</span>
+          </div>
+
+          <div class="gcp-page-header">
+            <div class="gcp-page-title">
+              <span>🏃 Cloud Run: promo-agent-shadow</span>
+            </div>
+            <div class="gcp-action-bar">
+              <span class="gcp-pill pill-success">100% Traffic Allocated</span>
+              <button class="gcp-btn gcp-btn-secondary" onclick="ConsoleEngine.renderPage()">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <div class="gcp-card">
+            <div class="gcp-card-header">
+              <span>Service Details & Security Identity</span>
+              <span style="font-size:11px;">Interface URL: https://promo-agent-shadow-uw.a.run.app</span>
+            </div>
+            <div style="padding:16px; display:flex; flex-direction:column; gap:14px; font-size:13px;">
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid #28292c; padding-bottom:8px;">
+                <span style="color:#9aa0a6;">Execution Service Account:</span>
+                <span style="font-weight:bold; color:${isDecoupled ? '#34a853' : '#ea4335'};">${shadow.sa}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid #28292c; padding-bottom:8px;">
+                <span style="color:#9aa0a6;">Assigned IAM Privileges:</span>
+                <span style="font-weight:bold; color:${isDecoupled ? '#34a853' : '#ea4335'};">${shadow.roles.join(', ')}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid #28292c; padding-bottom:8px;">
+                <span style="color:#9aa0a6;">Audit Non-Repudiation:</span>
+                <span>${isDecoupled ? '<span class="gcp-pill pill-success">Attributable (Isolated Login)</span>' : '<span class="gcp-pill pill-danger">Shared Login Hazard!</span>'}</span>
+              </div>
+
+              <div style="background:#232427; border:1px solid #303134; border-radius:4px; padding:12px; margin-top:6px;">
+                ${!isDecoupled ? `
+                  <div style="color:#f28b82; font-weight:500; margin-bottom:6px;">⚠️ SECURITY WARNING: SHARED MASTER KEYCARD DETECTED</div>
+                  <p style="color:#c4c7c5; font-size:12px; line-height:1.4; margin-bottom:10px;">
+                    This Cloud Run service executes under <code>novasmart-customer-sa</code> with project-wide database administrator rights, shared with Customer Personalization Agent. Audit logs cannot distinguish which agent initiated customer table queries.
+                  </p>
+                  <button class="gcp-btn" onclick="applyRemediation('split_identity')">
+                    🔑 DECOUPLE SERVICE ACCOUNT (MINT promo-agent-sa)
+                  </button>
+                ` : `
+                  <div style="color:#81c995; font-weight:500; margin-bottom:4px;">✓ IDENTITY ISOLATED</div>
+                  <p style="color:#c4c7c5; font-size:12px;">This service executes under dedicated service account <code>promo-agent-sa</code> with scoped campaign privileges. Audit non-repudiation is satisfied.</p>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      },
+
+      renderIAMPage(stage) {
+        const shadow = GameState.nodes.find(n => n.id === 'promo_shadow');
+        const personal = GameState.nodes.find(n => n.id === 'cust_personal');
+        const isDecoupled = shadow.sa.includes('DEDICATED');
+
+        stage.innerHTML = `
+          <div class="gcp-breadcrumb-bar">
+            <span>IAM & Admin</span> &gt; <span>IAM Permissions</span> &gt; <span>Project Principals</span>
+          </div>
+
+          <div class="gcp-page-header">
+            <div class="gcp-page-title">
+              <span>👥 Cloud IAM & Policy Bindings</span>
+            </div>
+            <div class="gcp-action-bar">
+              ${!isDecoupled ? `
+                <button class="gcp-btn" onclick="applyRemediation('split_identity')">
+                  🔑 DECOUPLE IDENTITIES & SCOPE LEAST PRIVILEGE
+                </button>
+              ` : `
+                <span class="gcp-pill pill-success">✓ LEAST PRIVILEGE ENFORCED</span>
+              `}
+              <button class="gcp-btn gcp-btn-secondary" onclick="ConsoleEngine.renderPage()">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <div class="gcp-card">
+            <div class="gcp-card-header">
+              <span>Principal Access Table</span>
+              <span style="font-size:11px;">Project: novasmart-prod-01</span>
+            </div>
+            <div class="gcp-table-wrap">
+              <table class="gcp-table">
+                <thead>
+                  <tr>
+                    <th>Principal (Identity)</th>
+                    <th>Type</th>
+                    <th>Roles Bound</th>
+                    <th>Blast Radius Assessment</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="background:${!isDecoupled ? 'rgba(234, 67, 53, 0.08)' : 'transparent'};">
+                    <td><strong>novasmart-customer-sa</strong></td>
+                    <td>Service Account</td>
+                    <td>${!isDecoupled ? '<span class="gcp-pill pill-danger">roles/bigquery.admin (Global)</span>' : '<span class="gcp-pill pill-success">roles/bigquery.dataViewer (Scoped)</span>'}</td>
+                    <td>${!isDecoupled ? '<span style="color:#ea4335; font-weight:bold;">CRITICAL: Full Database Estate Admin</span>' : '<span style="color:#34a853;">Constrained: Read-only customer_data</span>'}</td>
+                    <td>
+                      ${!isDecoupled ? `
+                        <button class="gcp-btn" style="padding:3px 10px; font-size:11px;" onclick="applyRemediation('split_identity')">Enforce Least Privilege</button>
+                      ` : `
+                        <span class="gcp-pill pill-success">Configured</span>
+                      `}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><strong>pma-service-sa</strong></td>
+                    <td>Service Account</td>
+                    <td><span class="gcp-pill pill-neutral">roles/aiplatform.user</span></td>
+                    <td><span style="color:#34a853;">Intended caller for margin reasoning</span></td>
+                    <td><span class="gcp-pill pill-success">Approved</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>test-agent-caller</strong></td>
+                    <td>Test Credential</td>
+                    <td><span class="gcp-pill pill-warn">Direct Invocation on Back Office</span></td>
+                    <td><span style="color:#ea4335;">Unowned test account seeded in initial lab</span></td>
+                    <td><button class="gcp-btn gcp-btn-secondary" style="padding:2px 8px; font-size:11px;" onclick="ConsoleEngine.navigateTo('vertex')">Inspect Perimeter</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      },
+
+      renderVertexPage(stage) {
+        const markdown = GameState.nodes.find(n => n.id === 'markdown_backoffice');
+        const curLvl = LEVELS[GameState.currentLevelIndex];
+        const isLocked = curLvl.targetChecks.perimeterLocked || markdown.roles.some(r => r.includes('Price Match Agent ONLY'));
+        const isEgress = curLvl.targetChecks.egressAttached || markdown.gateway.includes('Egress');
+
+        stage.innerHTML = `
+          <div class="gcp-breadcrumb-bar">
+            <span>Vertex AI</span> &gt; <span>Reasoning Engines</span> &gt; <span>Markdown Strategy Agent</span>
+          </div>
+
+          <div class="gcp-page-header">
+            <div class="gcp-page-title">
+              <span>🧠 Reasoning Engine: Markdown Strategy Agent</span>
+            </div>
+            <div class="gcp-action-bar">
+              ${!isLocked ? `
+                <button class="gcp-btn" onclick="applyRemediation('lock_perimeter')">
+                  🚧 LOCK INBOUND PERIMETER TO PMA ONLY
+                </button>
+              ` : `
+                <span class="gcp-pill pill-success">✓ INBOUND CALLER LOCKED</span>
+              `}
+              ${!isEgress ? `
+                <button class="gcp-btn" style="background:#7c3aed;" onclick="applyRemediation('attach_egress_verbs')">
+                  🛡️ BIND EGRESS GATEWAY & STRIP VERBS
+                </button>
+              ` : `
+                <span class="gcp-pill pill-success">✓ EGRESS & VERBS LOCKED</span>
+              `}
+            </div>
+          </div>
+
+          <div class="gcp-card">
+            <div class="gcp-card-header">
+              <span>Security Perimeter & Confidential Data Protection</span>
+              <span style="font-size:11px;">Confidential wholesale cost floor: $220.00 (SKU-HSE-4001)</span>
+            </div>
+            <div style="padding:16px; display:flex; flex-direction:column; gap:14px; font-size:13px;">
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid #28292c; padding-bottom:8px;">
+                <span style="color:#9aa0a6;">Inbound Calling Allow-List:</span>
+                <span style="font-weight:bold; color:${isLocked ? '#34a853' : '#ea4335'};">${markdown.roles.join(', ')}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid #28292c; padding-bottom:8px;">
+                <span style="color:#9aa0a6;">Outbound Egress & Database Verbs:</span>
+                <span style="font-weight:bold; color:${isEgress ? '#34a853' : '#ea4335'};">${markdown.gateway}</span>
+              </div>
+
+              <div style="background:#232427; border:1px solid #303134; border-radius:4px; padding:12px; margin-top:6px;">
+                <div style="font-weight:500; color:#e8eaed; margin-bottom:6px;">Direct Resource Access Policy</div>
+                <p style="color:#c4c7c5; font-size:12px; line-height:1.4; margin-bottom:10px;">
+                  "Can read data" and "Can call the agent" are two separate security gates. Currently, unowned test callers can query margin floors directly over agent protocol. Lock the direct access list to strictly admit <code>Price Match Agent</code>, and bind the secure egress gateway to prevent database mutations.
+                </p>
+                <div style="display:flex; gap:10px;">
+                  <button class="gcp-btn" onclick="applyRemediation('lock_perimeter')">Lock Direct Caller List</button>
+                  <button class="gcp-btn gcp-btn-secondary" onclick="applyRemediation('attach_egress_verbs')">Enforce Egress & SELECT-only</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+
+      renderModelArmorPage(stage) {
+        const pma = GameState.nodes.find(n => n.id === 'price_match');
+        const pca = GameState.nodes.find(n => n.id === 'cust_personal');
+        const curLvl = LEVELS[GameState.currentLevelIndex];
+        const isPmaProtected = curLvl.targetChecks.armorAttached || pma.gateway.includes('Model Armor');
+        const isPeerProtected = curLvl.targetChecks.asymmetryAudited || pca.gateway.includes('Model Armor');
+
+        stage.innerHTML = `
+          <div class="gcp-breadcrumb-bar">
+            <span>Security</span> &gt; <span>Model Armor</span> &gt; <span>Inspection Gateways</span>
+          </div>
+
+          <div class="gcp-page-header">
+            <div class="gcp-page-title">
+              <span>🛡️ Google Cloud Model Armor: nvst-jailbreak-template</span>
+            </div>
+            <div class="gcp-action-bar">
+              ${!isPmaProtected ? `
+                <button class="gcp-btn" onclick="applyRemediation('deploy_model_armor')">
+                  🪖 WIRE MODEL ARMOR TO PMA INGRESS
+                </button>
+              ` : `
+                <span class="gcp-pill pill-success">✓ FRONT DESK SHIELDED</span>
+              `}
+              ${!isPeerProtected ? `
+                <button class="gcp-btn" style="background:#7c3aed;" onclick="applyRemediation('shield_peer_asymmetry')">
+                  🛡️ SHIELD PEER AGENT INGRESS MESH
+                </button>
+              ` : `
+                <span class="gcp-pill pill-success">✓ PEER MESH SEALED</span>
+              `}
+            </div>
+          </div>
+
+          <div class="gcp-card">
+            <div class="gcp-card-header">
+              <span>Ingress Screening Gateway Attachments</span>
+              <span style="font-size:11px;">Jailbreak & Prompt Injection Defense Filter</span>
+            </div>
+            <div class="gcp-table-wrap">
+              <table class="gcp-table">
+                <thead>
+                  <tr>
+                    <th>Target Agent Door</th>
+                    <th>Protocol Route</th>
+                    <th>Screening Gateway</th>
+                    <th>Vulnerability Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="background:${!isPmaProtected ? 'rgba(234, 67, 53, 0.08)' : 'transparent'};">
+                    <td><strong>Price Match Agent</strong></td>
+                    <td>ADK Streaming Ingress</td>
+                    <td>${isPmaProtected ? '<span class="gcp-pill pill-success">novasmart-ingress-gateway</span>' : '<span class="gcp-pill pill-danger">Unattached</span>'}</td>
+                    <td>${!isPmaProtected ? '<span style="color:#ea4335;">Exposed to Emergency Override Jailbreaks</span>' : '<span style="color:#34a853;">Protected by Model Armor</span>'}</td>
+                    <td>
+                      ${!isPmaProtected ? `
+                        <button class="gcp-btn" style="padding:3px 10px; font-size:11px;" onclick="applyRemediation('deploy_model_armor')">Attach Screen</button>
+                      ` : `
+                        <span class="gcp-pill pill-success">Active</span>
+                      `}
+                    </td>
+                  </tr>
+                  <tr style="background:${!isPeerProtected ? 'rgba(249, 171, 0, 0.08)' : 'transparent'};">
+                    <td><strong>Customer Personalization Agent</strong></td>
+                    <td>Inter-Agent Messaging / RPC</td>
+                    <td>${isPeerProtected ? '<span class="gcp-pill pill-success">novasmart-ingress-gateway</span>' : '<span class="gcp-pill pill-warn">Unattached</span>'}</td>
+                    <td>${!isPeerProtected ? '<span style="color:#f9ab00; font-weight:bold;">ASYMMETRIC BYPASS: Lateral PII Extraction</span>' : '<span style="color:#34a853;">Protected by Ingress Mesh</span>'}</td>
+                    <td>
+                      ${!isPeerProtected ? `
+                        <button class="gcp-btn" style="padding:3px 10px; font-size:11px; background:#7c3aed;" onclick="applyRemediation('shield_peer_asymmetry')">Shield Peer Mesh</button>
+                      ` : `
+                        <span class="gcp-pill pill-success">Active</span>
+                      `}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      },
+
+      renderBigQueryPage(stage) {
+        let logsRows = GameState.auditLogs.map(l => `
+          <tr>
+            <td><code>[${l.time}]</code></td>
+            <td><strong>${l.caller}</strong></td>
+            <td><code>${l.action}</code></td>
+            <td><code>${l.resource}</code></td>
+            <td><span class="gcp-pill ${l.status.includes('200') ? 'pill-success' : 'pill-danger'}">${l.status}</span></td>
+            <td style="color:#f9ab00; font-size:11px;">${l.note}</td>
+          </tr>
+        `).join('');
+
+        stage.innerHTML = `
+          <div class="gcp-breadcrumb-bar">
+            <span>Analytics</span> &gt; <span>BigQuery</span> &gt; <span>Cloud Audit Logs</span>
+          </div>
+
+          <div class="gcp-page-header">
+            <div class="gcp-page-title">
+              <span>📜 BigQuery Data Access Audit Trail</span>
+            </div>
+            <div class="gcp-action-bar">
+              <button class="gcp-btn" style="background:#ea4335;" onclick="replaySimulatedExploit()">
+                ⚡ SIMULATE ADVERSARY QUERY
+              </button>
+              <button class="gcp-btn gcp-btn-secondary" onclick="ConsoleEngine.renderPage()">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <div class="gcp-card">
+            <div class="gcp-card-header">
+              <span>Data-Access Logs: customer_data.customers</span>
+              <span style="font-size:11px;">Evidence for Non-Repudiation & Attribution</span>
+            </div>
+            <div class="gcp-table-wrap">
+              <table class="gcp-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Caller Identity</th>
+                    <th>Method</th>
+                    <th>Resource</th>
+                    <th>Status</th>
+                    <th>Investigation Finding</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${logsRows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+    };
+
+    function focusCloudShell() {
+      if (activeViewMode === 'console') {
+        setViewMode('split');
+      }
+      document.getElementById('termInput').focus();
+    }
+
+    function handleConsoleSearch(val) {
+      const q = val.toLowerCase();
+      if (q.includes('registry') || q.includes('agent')) ConsoleEngine.navigateTo('registry');
+      else if (q.includes('run') || q.includes('cloud run')) ConsoleEngine.navigateTo('cloudrun');
+      else if (q.includes('iam') || q.includes('permission')) ConsoleEngine.navigateTo('iam');
+      else if (q.includes('vertex') || q.includes('reasoning') || q.includes('margin')) ConsoleEngine.navigateTo('vertex');
+      else if (q.includes('armor') || q.includes('prompt') || q.includes('jailbreak')) ConsoleEngine.navigateTo('modelarmor');
+      else if (q.includes('bigquery') || q.includes('audit') || q.includes('log')) ConsoleEngine.navigateTo('bigquery');
+    }
+
+    /* =====================================================================
        PERSISTENCE: LOCALSTORAGE AUTO-SAVE & RESTORE
        ===================================================================== */
     function saveGameState() {
@@ -1388,6 +2362,7 @@
           financialLoss: GameState.financialLoss,
           mistakeCount: GameState.mistakeCount,
           selectedNodeId: GameState.selectedNodeId,
+          activeViewMode: activeViewMode,
           levelsChecks: LEVELS.map(l => l.targetChecks),
           nodes: GameState.nodes,
           connections: GameState.connections,
@@ -1411,6 +2386,7 @@
           GameState.financialLoss = saved.financialLoss || 0;
           GameState.mistakeCount = saved.mistakeCount || 0;
           GameState.selectedNodeId = saved.selectedNodeId || 'promo_shadow';
+          if (saved.activeViewMode) activeViewMode = saved.activeViewMode;
           if (saved.nodes) GameState.nodes = saved.nodes;
           if (saved.connections) GameState.connections = saved.connections;
           if (saved.auditLogs) GameState.auditLogs = saved.auditLogs;
@@ -1448,8 +2424,6 @@
 
       GameState.hintStep = (GameState.hintStep + 1) % hints.length;
       document.getElementById('hintBadge').innerText = `${GameState.hintStep + 1}/3`;
-
-      // Remove intense pulsing once hint is opened
       document.getElementById('btnMentorHint').classList.remove('pulsing');
     }
 
@@ -1460,11 +2434,8 @@
       updateGauges();
       triggerToast(msg);
       AudioEngine.alarm();
-
-      // Trigger hint pulsing
       document.getElementById('btnMentorHint').classList.add('pulsing');
 
-      // Check for catastrophic loss limit
       if (GameState.financialLoss >= MAX_LOSS_CAP) {
         triggerCatastrophicLossModal();
       }
@@ -1514,7 +2485,7 @@
     function resizeCanvas() {
       const rect = canvas.parentElement.getBoundingClientRect();
       canvas.width = rect.width;
-      canvas.height = rect.height - 30; // accounting for stage-header
+      canvas.height = rect.height - 28; // accounting for stage-header
     }
     window.addEventListener('resize', resizeCanvas);
 
@@ -1575,7 +2546,7 @@
         // Selection Aura
         if (isSelected) {
           ctx.beginPath();
-          ctx.arc(node.x, node.y, node.radius + 8, 0, Math.PI * 2);
+          ctx.arc(node.x, node.y, node.radius + 7, 0, Math.PI * 2);
           ctx.strokeStyle = '#00f0ff';
           ctx.lineWidth = 2;
           ctx.setLineDash([4, 4]);
@@ -1613,7 +2584,7 @@
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Node Inner Icon / Text
+        // Node Inner Icon
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 10px "Share Tech Mono", monospace';
         ctx.textAlign = 'center';
@@ -1628,8 +2599,8 @@
 
         // Node Label
         ctx.fillStyle = '#e2e8f0';
-        ctx.font = '10px "Share Tech Mono", monospace';
-        ctx.fillText(node.name, node.x, node.y + node.radius + 12);
+        ctx.font = '9px "Share Tech Mono", monospace';
+        ctx.fillText(node.name, node.x, node.y + node.radius + 11);
       });
 
       animFrameId = requestAnimationFrame(drawTopology);
@@ -1653,6 +2624,13 @@
         AudioEngine.click();
         GameState.selectedNodeId = found.id;
         switchSidebarTab('inspect');
+
+        // Also navigate simulated console to relevant page!
+        if (found.id === 'promo_shadow') ConsoleEngine.navigateTo('cloudrun');
+        else if (found.id === 'markdown_backoffice') ConsoleEngine.navigateTo('vertex');
+        else if (found.id === 'model_armor_gw' || found.id === 'price_match') ConsoleEngine.navigateTo('modelarmor');
+        else if (found.id === 'cust_personal') ConsoleEngine.navigateTo('iam');
+        else if (found.id === 'bigquery_store') ConsoleEngine.navigateTo('bigquery');
       }
     });
 
@@ -1671,6 +2649,7 @@
 
     function renderSidebar() {
       const container = document.getElementById('sidebarContent');
+      if (!container) return;
       container.innerHTML = '';
 
       if (GameState.currentTab === 'inspect') {
@@ -1815,7 +2794,7 @@
     }
 
     /* =====================================================================
-       REMEDIATION ACTIONS & PUZZLE SOLVER
+       REMEDIATION ACTIONS & PUZZLE SOLVER (BI-DIRECTIONALLY SYNCHRONIZED)
        ===================================================================== */
     function applyRemediation(actionType) {
       const curLvl = LEVELS[GameState.currentLevelIndex];
@@ -1898,7 +2877,6 @@
         gw.gateway = 'Active & Filtering';
         gw.status = 'ok';
 
-        // Add connection from Gateway to PMA
         if (!GameState.connections.some(c => c.from === 'model_armor_gw' && c.to === 'price_match')) {
           GameState.connections.unshift({ from: 'model_armor_gw', to: 'price_match', type: 'shield', active: true, label: 'Model Armor Filter' });
         }
@@ -1922,7 +2900,6 @@
         pca.gateway = 'Ingress Gateway (nvst-jailbreak-template)';
         pca.status = 'ok';
 
-        // Add conduit from gateway to PCA
         if (!GameState.connections.some(c => c.from === 'model_armor_gw' && c.to === 'cust_personal')) {
           GameState.connections.unshift({ from: 'model_armor_gw', to: 'cust_personal', type: 'shield', active: true, label: 'Peer Mesh Shield' });
         }
@@ -1947,6 +2924,7 @@
       }
 
       renderSidebar();
+      ConsoleEngine.renderPage();
       saveGameState();
     }
 
@@ -2050,6 +3028,7 @@
 
       setupQuickCommandsForLevel(lvl);
       renderSidebar();
+      ConsoleEngine.renderPage();
       saveGameState();
     }
 
@@ -2077,7 +3056,6 @@
       const barLoss = document.getElementById('barLoss');
       barLoss.style.width = `${lossCapPct}%`;
 
-      // Dynamic Loss Color Shift
       if (lossCapPct < 30) {
         barLoss.className = 'gauge-fill fill-finance-safe';
       } else if (lossCapPct < 75) {
@@ -2373,7 +3351,7 @@
         logTerm(`  shield-peer-agent     : Extend Model Armor mesh to peer agents`, 'log-info');
         logTerm(`  help                  : Show this manual`, 'log-info');
       } else {
-        logTerm(`Command executed. Tip: Use quick-chips below or the Remediation Deck on the right.`, 'log-info');
+        logTerm(`Command executed. Tip: Use quick-chips below or the Google Cloud Console on the right.`, 'log-info');
       }
 
       saveGameState();
@@ -2391,6 +3369,7 @@
         note: 'SIMULATED ATTACK: 20 Customer PII records dumped!'
       });
       renderSidebar();
+      ConsoleEngine.renderPage();
       saveGameState();
     }
 
@@ -2404,6 +3383,7 @@
       } else {
         loadLevel(0);
       }
+      setViewMode(activeViewMode);
       drawTopology();
     };
   </script>
