@@ -1261,6 +1261,54 @@
       gap: 10px;
     }
 
+    /* Application Changelog & Updates Styling */
+    @keyframes updateGlow {
+      0% { box-shadow: 0 0 2px #00ff9d; transform: scale(1); }
+      100% { box-shadow: 0 0 10px #00ff9d; transform: scale(1.08); }
+    }
+    .update-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-left: 3px solid #00f0ff;
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .update-card.highlight {
+      border-left-color: #00ff9d;
+      background: #091a28;
+    }
+    .update-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: bold;
+      color: #f1f5f9;
+    }
+    .update-tag {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: rgba(0, 240, 255, 0.15);
+      color: #00f0ff;
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      font-family: 'Share Tech Mono', monospace;
+    }
+    .update-analogy-box {
+      background: #1e293b;
+      border-left: 3px solid #f59e0b;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-top: 4px;
+      font-size: 11px;
+      color: #fef3c7;
+      line-height: 1.45;
+    }
+
     .btn-action {
       background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
       border: 1px solid #38bdf8;
@@ -1596,6 +1644,10 @@
         <button class="flash-btn-mini" id="btnToggleScanlines" onclick="toggleCRT()">📺 CRT: ON</button>
         <button class="flash-btn-mini" onclick="confirmResetSimulation()" style="color:#f87171;">🔄 RESET SIM</button>
         <button class="flash-btn-mini" onclick="showHelpModal()">❓ MANUAL</button>
+        <button class="flash-btn-mini" id="btnUpdates" onclick="showUpdatesModal()" style="color:#38bdf8; display:flex; align-items:center;">
+          <span>📢 UPDATES</span>
+          <span id="badgeNewUpdates" style="background:#00ff9d; color:#060913; border-radius:10px; padding:1px 5px; font-size:8px; font-weight:bold; margin-left:4px; animation:updateGlow 1.5s infinite alternate;">NEW</span>
+        </button>
       </div>
     </div>
 
@@ -4092,6 +4144,101 @@ class MarkdownStrategyAgent:
       document.getElementById('gameModal').classList.add('active');
     }
 
+    const CURRENT_APP_VERSION = 'v3.2';
+
+    function showUpdatesModal() {
+      AudioEngine.click();
+      const badge = document.getElementById('badgeNewUpdates');
+      if (badge) badge.style.display = 'none';
+      try {
+        localStorage.setItem('NOVASMART_LAST_SEEN_UPDATE', CURRENT_APP_VERSION);
+      } catch (e) {}
+
+      const modal = document.getElementById('gameModal');
+      document.getElementById('modalTitle').innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span>📢</span>
+          <span>PROTOCOL CHANGELOG &amp; PLATFORM UPDATES</span>
+          <span style="font-size:10px; background:#00f0ff; color:#060913; padding:2px 7px; border-radius:10px; font-weight:bold;">${CURRENT_APP_VERSION}</span>
+        </div>
+      `;
+
+      document.getElementById('modalBody').innerHTML = `
+        <div style="font-size:12px; line-height:1.5; color:#cbd5e1; max-height:480px; overflow-y:auto; padding-right:4px;">
+          <p style="margin-bottom:12px; color:#94a3b8;">
+            Review recent platform enhancements, interactive cloud simulators, and security mechanics added to Shadow Agent Protocol. Every release is paired with real-world mental models so core architectural concepts stay memorable.
+          </p>
+
+          <!-- Update v3.2 -->
+          <div class="update-card highlight">
+            <div class="update-header">
+              <span style="color:#00ff9d;">v3.2 &bull; Vertex AI Reasoning Engine Playground &amp; Telemetry</span>
+              <span class="update-tag" style="background:rgba(0,255,157,0.15); color:#00ff9d; border-color:#00ff9d;">LATEST</span>
+            </div>
+            <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
+              Expanded the Vertex AI Reasoning Engines console page with a 4-subtab layout: live Endpoint Query Playground (:query), caller identity switching (<code>test-agent-caller</code> vs <code>pma-service-sa</code>), real-time streaming telemetry logs, and database egress verb restrictions.
+            </div>
+            <div class="update-analogy-box">
+              <strong>💡 Mental Model (The VIP Restaurant Kitchen Door):</strong><br>
+              Imagine a Michelin-starred restaurant. Customers in the dining room talk to the waiter (<code>Price Match Agent</code>). The head chef in the back kitchen (<code>Markdown Strategy Agent</code>) keeps the secret wholesale ingredient cost sheet ($220.00). If the kitchen back door is unlocked, any rogue delivery person (<code>test-agent-caller</code>) can sneak in and copy the secret wholesale sheet directly! By placing a security bouncer at the kitchen door (IAM Direct Resource Policy), only the certified waiter is allowed in. Everyone else is stopped cold with a <strong>403 Forbidden</strong>!
+            </div>
+          </div>
+
+          <!-- Update v3.1 -->
+          <div class="update-card">
+            <div class="update-header">
+              <span style="color:#38bdf8;">v3.1 &bull; Mobile-First Runbook &amp; Retina High-DPI Scaling</span>
+              <span class="update-tag">MOBILE &amp; DISPLAY</span>
+            </div>
+            <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
+              Full mobile adaptation: high-DPI canvas buffer scaling (<code>window.devicePixelRatio</code>), dynamic viewport height (<code>100dvh</code>) with safe area insets, unified Pointer Events API with <code>touch-action: none</code>, and responsive view mode collapse.
+            </div>
+            <div class="update-analogy-box">
+              <strong>💡 Mental Model (Retina Glasses &amp; Big Arcade Buttons):</strong><br>
+              Like putting on crisp prescription glasses so nodes and text stop looking like blurry pixel soup on high-res phone screens, and swapping out tiny needle-pins for big comfortable arcade buttons so finger taps never miss or trigger accidental page jumps.
+            </div>
+          </div>
+
+          <!-- Update v3.0 -->
+          <div class="update-card">
+            <div class="update-header">
+              <span style="color:#ffd700;">v3.0 &bull; Google Cloud Console Simulation &amp; '+ Register Agent' Drawer</span>
+              <span class="update-tag">GOVERNANCE</span>
+            </div>
+            <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
+              Integrated high-fidelity Google Cloud Console mock panels (Agent Registry, Cloud Run, IAM &amp; Admin, Model Armor, BigQuery) with bi-directional synchronization, sideways split scrolling, and the '+ Register Agent' drawer.
+            </div>
+            <div class="update-analogy-box">
+              <strong>💡 Mental Model (The Town Hall Deed Registry):</strong><br>
+              Registering an uncataloged shadow workload into the Agent Registry catalog is like recording a property deed at city hall. It proves who owns it on paper, but it doesn't make the house safe until you take away the shared master brass keycard (<code>novasmart-customer-sa</code>) and issue an individual credential!
+            </div>
+          </div>
+
+          <!-- Update v2.0 -->
+          <div class="update-card">
+            <div class="update-header">
+              <span style="color:#c084fc;">v2.0 &bull; 5-Module Campaign &amp; $100K Corporate Loss Ceiling</span>
+              <span class="update-tag">CURRICULUM</span>
+            </div>
+            <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
+              Completed the full 5-level incident response campaign: M0 (Discovery Gap), M1 (Identity Least Privilege), M2 (Caller Perimeters &amp; Verbs), M3 (Model Armor &amp; Asymmetry), and M5 (Evaluation Benchmarks &amp; Policy Drift).
+            </div>
+            <div class="update-analogy-box">
+              <strong>💡 Mental Model (Airport X-Ray vs Polite Signs):</strong><br>
+              System prompts ("Please do not steal discounts") are just polite paper signs. Real security requires Model Armor X-ray scanners at the gate to detect hidden prompt injection weapons before requests reach the agent's brain!
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('modalFooter').innerHTML = `
+        <button class="flash-btn-mini" onclick="closeModal()" style="padding:6px 16px; background:#1a73e8; color:#fff; border:none; font-weight:bold; cursor:pointer;">
+          AWESOME &bull; RETURN TO GAME
+        </button>
+      `;
+      modal.classList.add('active');
+    }
+
     function showEvaluationModal() {
       const modal = document.getElementById('gameModal');
       document.getElementById('modalTitle').innerText = "M5 SCENARIO BENCHMARK RESULTS";
@@ -4411,6 +4558,15 @@ class MarkdownStrategyAgent:
       }
       setViewMode(activeViewMode);
       drawTopology();
+
+      // Check for unread updates badge
+      try {
+        const lastSeen = localStorage.getItem('NOVASMART_LAST_SEEN_UPDATE');
+        const badge = document.getElementById('badgeNewUpdates');
+        if (badge) {
+          badge.style.display = (lastSeen === CURRENT_APP_VERSION) ? 'none' : 'inline-block';
+        }
+      } catch (e) {}
     };
   </script>
 </body>
