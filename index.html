@@ -52,6 +52,11 @@
       color: var(--text-main);
       font-family: 'Share Tech Mono', monospace;
       height: 100vh;
+      height: 100dvh;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -65,6 +70,7 @@
       height: 870px;
       max-width: 98vw;
       max-height: 98vh;
+      max-height: calc(100dvh - 12px);
       background: var(--bg-dark);
       border: 3px solid #3b4252;
       border-radius: 8px;
@@ -436,6 +442,7 @@
       display: block;
       background: radial-gradient(circle at 50% 50%, #0e172a 0%, #080d1a 100%);
       cursor: crosshair;
+      touch-action: none;
     }
 
     .canvas-legend {
@@ -1247,6 +1254,229 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+
+    /* =====================================================================
+       MOBILE FIRST RESPONSIVE OPTIMIZATIONS (iOS Safari & Android Chrome)
+       ===================================================================== */
+    @media (max-width: 900px) {
+      .game-hud {
+        height: auto;
+        min-height: 54px;
+        padding: 6px 10px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .mission-indicator {
+        min-width: 200px;
+        flex: 1;
+      }
+      .quest-checklist {
+        order: 3;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+      }
+      .gauges-container {
+        flex: 1;
+        justify-content: flex-end;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 0;
+        justify-content: flex-start;
+      }
+
+      /* Fullscreen shell without desktop borders */
+      #flash-container {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        max-width: 100vw;
+        max-height: 100dvh;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+      }
+
+      /* Compact Titlebar with touchable buttons */
+      .flash-titlebar {
+        height: auto;
+        min-height: 44px;
+        padding: 4px 8px;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .flash-title-left {
+        gap: 6px;
+        font-size: 8px;
+      }
+      .flash-controls {
+        width: 100%;
+        justify-content: space-between;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Touch targets: 44px min-height */
+      .view-mode-selector {
+        margin-right: 2px;
+      }
+      .view-mode-btn {
+        padding: 8px 12px;
+        font-size: 11px;
+        min-height: 44px;
+      }
+      .flash-btn-mini {
+        padding: 8px 10px;
+        font-size: 10px;
+        min-height: 44px;
+      }
+
+      /* Mobile HUD */
+      .game-hud {
+        height: auto;
+        padding: 6px 8px;
+        gap: 6px;
+      }
+      .mission-indicator {
+        min-width: 100%;
+        width: 100%;
+      }
+      .mission-title {
+        font-size: 11px;
+      }
+      .mission-step {
+        font-size: 10px;
+      }
+      .gauges-container {
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .gauge-block {
+        width: 45%;
+        flex: 1;
+      }
+      .score-badge {
+        padding: 4px 6px;
+        font-size: 8px;
+        align-self: center;
+      }
+
+      /* Flash Mode Mobile Layout: Stack Stage, Bottom Panel, and Sidebar */
+      .viewmode-flash #playArena {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        height: 100% !important;
+        padding: 6px !important;
+        gap: 8px !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      .viewmode-flash #playArena .stage-wrapper {
+        min-height: 260px;
+        height: 280px;
+        flex-shrink: 0;
+      }
+      .viewmode-flash #playArena .bottom-panel {
+        display: flex !important;
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: 240px;
+        flex-shrink: 0;
+        gap: 8px;
+      }
+      .viewmode-flash #playArena .sidebar-panel {
+        display: flex !important;
+        height: auto !important;
+        min-height: 280px;
+        flex-shrink: 0;
+      }
+
+      /* Split Mode Mobile Adjustments */
+      .viewmode-split #playArena {
+        width: 88vw !important;
+        min-width: 320px !important;
+      }
+      .viewmode-split #gcpConsoleContainer {
+        min-width: 660px !important;
+      }
+
+      /* GCP Console Mobile Responsive Adaptation */
+      .gcp-header {
+        height: auto;
+        min-height: 44px;
+        padding: 6px 10px;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .gcp-search-wrap {
+        order: 3;
+        width: 100%;
+        max-width: 100%;
+        margin: 4px 0 0;
+      }
+      .gcp-body {
+        flex-direction: column !important;
+      }
+      .gcp-nav-rail {
+        width: 100% !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        white-space: nowrap !important;
+        border-right: none !important;
+        border-bottom: 1px solid var(--gcp-border) !important;
+        padding: 4px 6px !important;
+        gap: 4px !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      .gcp-nav-section-title {
+        display: none !important;
+      }
+      .gcp-nav-item {
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+        border-left: none !important;
+        border-bottom: 3px solid transparent !important;
+        border-radius: 4px !important;
+        min-height: 44px !important;
+        flex-shrink: 0 !important;
+      }
+      .gcp-nav-item.active {
+        border-bottom-color: var(--gcp-blue) !important;
+      }
+      .gcp-main-stage {
+        padding: 12px 10px !important;
+        gap: 12px !important;
+      }
+      .gcp-btn {
+        min-height: 44px;
+        padding: 8px 14px;
+      }
+      .quick-chip {
+        min-height: 38px;
+        padding: 6px 12px;
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      /* Modal Mobile Optimization */
+      .modal-box {
+        max-width: 95vw;
+        max-height: 90vh;
+        max-height: 90dvh;
+      }
+      .modal-body {
+        max-height: 55dvh;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1491,7 +1721,7 @@
     const MAX_LOSS_CAP = 100000; // $100K Corporate Tolerance Capacity Ceiling
     const SAVE_KEY = 'NOVASMART_SHADOW_AGENT_SAVE_V3';
 
-    // Web Audio Synthesizer
+    // Web Audio Synthesizer with Mobile Auto-Play Unlock
     const AudioEngine = {
       ctx: null,
       enabled: true,
@@ -1499,13 +1729,19 @@
       init() {
         if (!this.ctx) {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
-          this.ctx = new AudioContext();
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
         }
       },
 
       playBleep(freq = 440, type = 'sine', duration = 0.08, vol = 0.15) {
         if (!this.enabled) return;
         this.init();
+        if (!this.ctx) return;
         try {
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
@@ -1539,6 +1775,16 @@
         this.playBleep(300 + Math.random() * 200, 'sine', 0.04, 0.06);
       }
     };
+
+    // Mobile Auto-Play Policy Unlock Gate on first user gesture
+    function initOrUnlockAudio() {
+      AudioEngine.init();
+      if (AudioEngine.ctx && AudioEngine.ctx.state === 'suspended') {
+        AudioEngine.ctx.resume().catch(() => {});
+      }
+    }
+    window.addEventListener('pointerdown', initOrUnlockAudio, { once: true });
+    window.addEventListener('touchstart', initOrUnlockAudio, { once: true, passive: true });
 
     function toggleAudio() {
       AudioEngine.enabled = !AudioEngine.enabled;
@@ -2335,7 +2581,7 @@
 
     function focusCloudShell() {
       if (activeViewMode === 'console') {
-        setViewMode('split');
+        setViewMode(window.innerWidth <= 768 ? 'flash' : 'split');
       }
       document.getElementById('termInput').focus();
     }
@@ -2475,22 +2721,37 @@
     }
 
     /* =====================================================================
-       TOPOLOGY CANVAS RENDERING ENGINE
+       TOPOLOGY CANVAS RENDERING ENGINE (RETINA HIGH-DPI & POINTER OPTIMIZED)
        ===================================================================== */
     const canvas = document.getElementById('topologyCanvas');
     const ctx = canvas.getContext('2d');
     let animFrameId;
     let packetOffset = 0;
+    let canvasDpr = 1;
+    let canvasScale = 1;
 
     function resizeCanvas() {
+      if (!canvas || !canvas.parentElement) return;
       const rect = canvas.parentElement.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height - 28; // accounting for stage-header
+      canvasDpr = window.devicePixelRatio || 1;
+      const displayWidth = rect.width;
+      const displayHeight = Math.max(140, rect.height - 28); // accounting for stage-header
+
+      canvas.width = Math.round(displayWidth * canvasDpr);
+      canvas.height = Math.round(displayHeight * canvasDpr);
+      canvas.style.width = displayWidth + 'px';
+      canvas.style.height = displayHeight + 'px';
+
+      // Responsive stage scale: ensure nodes fit comfortably on mobile (<480px width)
+      canvasScale = Math.min(1.0, Math.max(0.65, displayWidth / 480));
     }
     window.addEventListener('resize', resizeCanvas);
 
     function drawTopology() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.setTransform(canvasDpr * canvasScale, 0, 0, canvasDpr * canvasScale, 0, 0);
+      const virtualW = canvas.width / (canvasDpr * canvasScale);
+      const virtualH = canvas.height / (canvasDpr * canvasScale);
+      ctx.clearRect(0, 0, virtualW, virtualH);
 
       // Draw Connection Conduits
       packetOffset += 0.04;
@@ -2606,16 +2867,18 @@
       animFrameId = requestAnimationFrame(drawTopology);
     }
 
-    // Interactive Canvas Clicking
-    canvas.addEventListener('click', (e) => {
+    // Interactive Canvas Pointer Handling (Unified Mouse & Touch via Pointer Events API)
+    canvas.addEventListener('pointerdown', (e) => {
+      initOrUnlockAudio();
       const rect = canvas.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
+      const clickX = (e.clientX - rect.left) / canvasScale;
+      const clickY = (e.clientY - rect.top) / canvasScale;
 
       let found = null;
       GameState.nodes.forEach(node => {
         const dist = Math.hypot(node.x - clickX, node.y - clickY);
-        if (dist <= node.radius + 6) {
+        // Minimum touch target tolerance of 44px (node.radius + 16px)
+        if (dist <= node.radius + 16) {
           found = node;
         }
       });
@@ -3373,7 +3636,7 @@
       saveGameState();
     }
 
-    // Initialize Game with Save State Detection
+    // Initialize Game with Save State Detection & Mobile View Mode Adaptation
     window.onload = () => {
       resizeCanvas();
       const hasSave = loadSavedGameState();
@@ -3382,6 +3645,10 @@
         loadLevel(GameState.currentLevelIndex);
       } else {
         loadLevel(0);
+        // On mobile viewports without existing save preference, default to single-pane Flash HUD
+        if (window.innerWidth <= 768) {
+          activeViewMode = 'flash';
+        }
       }
       setViewMode(activeViewMode);
       drawTopology();
