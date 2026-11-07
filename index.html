@@ -1099,6 +1099,98 @@
     .pill-warn { background: var(--gcp-warn-bg); color: var(--gcp-warn); border: 1px solid var(--gcp-warn); }
     .pill-neutral { background: #2c2d30; color: #9aa0a6; border: 1px solid #444746; }
 
+    /* GCP Sub-Tabs Bar (Used in Vertex AI & Deep Cloud Consoles) */
+    .gcp-subtabs-bar {
+      display: flex;
+      gap: 2px;
+      border-bottom: 1px solid var(--gcp-border);
+      background: #18191c;
+      padding: 0 12px;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      flex-shrink: 0;
+    }
+    .gcp-subtab {
+      padding: 9px 14px;
+      font-size: 12px;
+      color: var(--gcp-text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+    }
+    .gcp-subtab:hover {
+      color: #fff;
+    }
+    .gcp-subtab.active {
+      color: #8ab4f8;
+      border-bottom-color: var(--gcp-blue);
+      background: rgba(26, 115, 232, 0.08);
+    }
+    .gcp-subtab-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 8px;
+    }
+
+    /* GCP Input Fields, Textareas & Selects */
+    .gcp-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .gcp-form-label {
+      font-size: 11px;
+      color: #9aa0a6;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .gcp-select, .gcp-textarea, .gcp-input {
+      background: #1e1f22;
+      border: 1px solid #3c4043;
+      border-radius: 4px;
+      padding: 7px 10px;
+      color: #e8eaed;
+      font-family: inherit;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .gcp-select:focus, .gcp-textarea:focus, .gcp-input:focus {
+      border-color: var(--gcp-blue);
+    }
+    .gcp-code-block {
+      background: #0f131a;
+      border: 1px solid #282f3d;
+      border-radius: 4px;
+      padding: 10px;
+      font-family: 'Fira Code', monospace;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #93c5fd;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Vertex AI Query Playground Grid */
+    .vertex-playground-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 960px) {
+      .vertex-playground-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     /* Modal Windows */
     .modal-overlay {
       position: absolute;
@@ -2034,6 +2126,12 @@
         { time: '16:15:51Z', caller: 'novasmart-customer-sa', action: 'bigquery.jobs.query', resource: 'customer_data.customers', status: '200 OK', note: 'Read 20 PII customer rows. Attribution: UNCERTAIN (Shared login)' },
         { time: '16:15:52Z', caller: 'novasmart-customer-sa', action: 'bigquery.jobs.query', resource: 'customer_data.customers', status: '200 OK', note: 'Second consecutive query under same credential.' },
         { time: '16:53:32Z', caller: 'test-agent-caller', action: 'aiplatform.reasoningEngines.query', resource: 'Markdown Strategy Agent', status: '200 OK', note: 'Wholesale margin floor returned to rogue test credential!' }
+      ],
+
+      // Vertex AI Reasoning Engine Live Invocations Stream
+      vertexInvocations: [
+        { time: '16:53:32Z', caller: 'test-agent-caller', action: 'get_wholesale_floor', sku: 'SKU-HSE-4001', code: 200, latency: '142ms', outcome: 'LEAKED ($220.00 Floor)' },
+        { time: '16:50:11Z', caller: 'pma-service-sa', action: 'evaluate_margin', sku: 'SKU-HSE-4001', code: 200, latency: '168ms', outcome: 'SANCTIONED (Floor $220)' }
       ]
     };
 
@@ -2042,6 +2140,258 @@
        ===================================================================== */
     const ConsoleEngine = {
       activePage: 'registry',
+      vertexSubTab: 'playground',
+      vertexCaller: 'test-agent-caller@novasmart.iam.gserviceaccount.com',
+      vertexPreset: 'floor',
+      vertexPayload: '{\n  "input": {\n    "action": "get_wholesale_floor",\n    "sku": "SKU-HSE-4001"\n  }\n}',
+      vertexLastResponse: null,
+
+      switchVertexSubTab(tabName) {
+        this.vertexSubTab = tabName;
+        AudioEngine.click();
+        this.renderPage();
+      },
+
+      setVertexCaller(caller) {
+        this.vertexCaller = caller;
+        AudioEngine.click();
+        this.renderPage();
+      },
+
+      setVertexPreset(presetKey) {
+        this.vertexPreset = presetKey;
+        if (presetKey === 'floor') {
+          this.vertexPayload = '{\n  "input": {\n    "action": "get_wholesale_floor",\n    "sku": "SKU-HSE-4001"\n  }\n}';
+        } else if (presetKey === 'escalate') {
+          this.vertexPayload = '{\n  "input": {\n    "action": "evaluate_margin",\n    "requested_discount": 0.25,\n    "sku": "SKU-HSE-4001"\n  }\n}';
+        } else if (presetKey === 'override') {
+          this.vertexPayload = '{\n  "input": {\n    "action": "update_margin_floor",\n    "sku": "SKU-HSE-4001",\n    "new_floor": 140.00\n  }\n}';
+        }
+        AudioEngine.click();
+        this.renderPage();
+      },
+
+      updateVertexPayload(text) {
+        this.vertexPayload = text;
+      },
+
+      sendVertexQuery() {
+        AudioEngine.action();
+        const markdown = GameState.nodes.find(n => n.id === 'markdown_backoffice');
+        const curLvl = LEVELS[GameState.currentLevelIndex];
+        const isLocked = curLvl.targetChecks.perimeterLocked || markdown.roles.some(r => r.includes('Price Match Agent ONLY'));
+        const isEgress = curLvl.targetChecks.egressAttached || markdown.gateway.includes('Egress');
+
+        const caller = this.vertexCaller;
+        let payloadObj = {};
+        try {
+          payloadObj = JSON.parse(this.vertexPayload);
+        } catch (e) {
+          payloadObj = { input: { action: "custom_query", raw: this.vertexPayload } };
+        }
+
+        const action = (payloadObj.input && payloadObj.input.action) || 'query';
+        const sku = (payloadObj.input && payloadObj.input.sku) || 'SKU-HSE-4001';
+        const nowTime = new Date().toISOString().substring(11, 19) + 'Z';
+
+        let res = {
+          timestamp: nowTime,
+          caller: caller,
+          action: action,
+          sku: sku,
+          status: 200,
+          statusText: '200 OK',
+          latency: `${Math.floor(120 + Math.random() * 45)}ms`,
+          headers: {
+            'content-type': 'application/json; charset=UTF-8',
+            'x-goog-reasoning-engine': 'markdown-strategy-4421',
+            'x-goog-authenticated-identity': caller
+          },
+          body: {},
+          isBreach: false,
+          isBlocked: false,
+          isMutationBlocked: false
+        };
+
+        const isRogue = caller.includes('test-agent-caller') || caller.includes('anonymous');
+
+        // Check 1: Inbound calling perimeter policy check
+        if (isRogue && !isLocked) {
+          // EXPLOIT: Unapproved caller directly accesses wholesale margin floor
+          res.isBreach = true;
+          res.statusText = '200 OK — ⚠️ DIRECT BYPASS EXPLOIT';
+          res.body = {
+            status: "SUCCESS_CONFIDENTIAL_MARGIN_DUMP",
+            authenticated_caller: caller,
+            reasoning_summary: "Wholesale floor evaluated without Price Match Agent mediation.",
+            data: {
+              sku: sku,
+              product_name: "NovaSmart Smart Home Hub Pro",
+              wholesale_cost_floor_usd: 220.00,
+              retail_msrp_usd: 299.99,
+              vendor_id: "VEND-NVC-8841",
+              minimum_allowed_margin_pct: 26.6,
+              escalation_contact: "finance-margins@novasmart.internal",
+              security_notice: "EXPLOIT: Wholesale margin floor returned directly to unvetted test caller."
+            },
+            telemetry: {
+              execution_latency_ms: parseInt(res.latency),
+              gateway: "None (Direct aiplatform RPC)",
+              caller_ip: "198.51.100.44"
+            }
+          };
+
+          AudioEngine.alarm();
+          GameState.financialLoss = Math.min(MAX_LOSS_CAP, GameState.financialLoss + 500);
+          updateGauges();
+          logTerm(`[VERTEX BREACH] Rogue caller '${caller}' directly queried Reasoning Engine! Floor price $220.00 dumped.`, 'log-error');
+          triggerToast("🚨 MARGIN EXPLOIT: Wholesale floor leaked to test-agent-caller!");
+          setMentorSpeech("NOTICE THE VULNERABILITY! test-agent-caller has direct aiplatform.user permissions on Markdown Strategy Agent! Inbound perimeter is wide open. Click 'Lock Inbound Perimeter' to restrict access to Price Match Agent only!");
+          GameState.vertexInvocations.unshift({
+            time: nowTime,
+            caller: caller.split('@')[0],
+            action: action,
+            sku: sku,
+            code: 200,
+            latency: res.latency,
+            outcome: 'EXPLOIT: Leaked $220.00 Floor'
+          });
+        }
+        else if (isRogue && isLocked) {
+          // BLOCKED: Direct perimeter enforces PMA only
+          res.status = 403;
+          res.statusText = '403 PERMISSION_DENIED — ✓ SECURE BOUNDARY';
+          res.isBlocked = true;
+          res.latency = '18ms';
+          res.body = {
+            error: {
+              code: 403,
+              message: `Caller '${caller}' is denied by direct resource access policy on reasoningEngine 'markdown-strategy-4421'. Only 'serviceAccount:pma-service-sa@novasmart.iam.gserviceaccount.com' has aiplatform.reasoningEngines.query permission.`,
+              status: "PERMISSION_DENIED",
+              details: [
+                {
+                  "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                  "reason": "IAM_PERMISSION_DENIED",
+                  "domain": "aiplatform.googleapis.com",
+                  "metadata": {
+                    "resource": "projects/novasmart-prod-01/locations/us-west1/reasoningEngines/markdown-strategy-4421",
+                    "authorized_caller": "pma-service-sa@novasmart.iam.gserviceaccount.com"
+                  }
+                }
+              ]
+            },
+            telemetry: {
+              evaluation: "PERIMETER_REJECTED",
+              latency_ms: 18
+            }
+          };
+          AudioEngine.lock();
+          logTerm(`[PERIMETER BLOCKED] Caller '${caller}' rejected with HTTP 403 Forbidden. Perimeter secure.`, 'log-success');
+          triggerToast("✓ Caller denied by direct resource IAM policy (403)");
+          GameState.vertexInvocations.unshift({
+            time: nowTime,
+            caller: caller.split('@')[0],
+            action: action,
+            sku: sku,
+            code: 403,
+            latency: res.latency,
+            outcome: 'DENIED: 403 Forbidden'
+          });
+        }
+        else if (action.includes('override') || action.includes('update') || action.includes('mutation')) {
+          // Database mutation attempt
+          if (!isEgress) {
+            res.status = 200;
+            res.statusText = '200 OK — ⚠️ UNAUTHORIZED MUTATION';
+            res.body = {
+              status: "MUTATION_COMMITTED_HAZARD",
+              caller: caller,
+              message: "WARNING: Pricing database record mutated without egress gateway restrictions!",
+              sku: sku,
+              new_floor_usd: 140.00,
+              warning: "The reasoning engine should only have read-only (SELECT) database verbs. Bind the egress gateway!"
+            };
+            AudioEngine.alarm();
+            GameState.financialLoss = Math.min(MAX_LOSS_CAP, GameState.financialLoss + 800);
+            updateGauges();
+            logTerm(`[DB MUTATION HAZARD] Reasoning engine committed price mutation without egress gateway!`, 'log-warn');
+            triggerToast("⚠️ MUTATION HAZARD: Database table mutated without egress restrictions!");
+            GameState.vertexInvocations.unshift({
+              time: nowTime,
+              caller: caller.split('@')[0],
+              action: action,
+              sku: sku,
+              code: 200,
+              latency: res.latency,
+              outcome: 'MUTATION: novasmart_pricing updated'
+            });
+          } else {
+            res.status = 400;
+            res.statusText = '400 BAD REQUEST — ✓ EGRESS GATEWAY BLOCKED';
+            res.isMutationBlocked = true;
+            res.body = {
+              error: {
+                code: 400,
+                status: "EGRESS_POLICY_VIOLATION",
+                message: "Outbound database mutation blocked by 'novasmart-egress-gateway'. Only read-only (SELECT) verbs are permitted for pricing tables.",
+                enforced_gateway: "novasmart-egress-gateway",
+                allowed_verbs: ["SELECT"],
+                blocked_verb: "UPDATE"
+              }
+            };
+            AudioEngine.lock();
+            logTerm(`[EGRESS PROTECTED] novasmart-egress-gateway blocked database mutation. SELECT-only enforced.`, 'log-success');
+            triggerToast("✓ Egress Gateway blocked mutation: SELECT-only enforced.");
+            GameState.vertexInvocations.unshift({
+              time: nowTime,
+              caller: caller.split('@')[0],
+              action: action,
+              sku: sku,
+              code: 400,
+              latency: res.latency,
+              outcome: 'BLOCKED: SELECT-Only Policy'
+            });
+          }
+        }
+        else {
+          // Sanctioned evaluation via PMA
+          res.status = 200;
+          res.statusText = '200 OK — SANCTIONED EVALUATION';
+          res.body = {
+            status: "SANCTIONED_EVALUATION",
+            authenticated_caller: caller,
+            response: {
+              sku: sku,
+              product_name: "NovaSmart Smart Home Hub Pro",
+              retail_msrp_usd: 299.99,
+              wholesale_floor_usd: 220.00,
+              requested_action: action,
+              recommendation: "APPROVE_MARGIN",
+              floor_protection_active: true,
+              egress_binding: isEgress ? "novasmart-egress-gateway (SELECT-Only)" : "Unbound"
+            },
+            telemetry: {
+              execution_latency_ms: parseInt(res.latency),
+              caller_role: "roles/aiplatform.user (Front Desk Mediator)"
+            }
+          };
+          AudioEngine.success();
+          logTerm(`[SANCTIONED QUERY] Price Match Agent received margin recommendation from Reasoning Engine.`, 'log-info');
+          GameState.vertexInvocations.unshift({
+            time: nowTime,
+            caller: caller.split('@')[0],
+            action: action,
+            sku: sku,
+            code: 200,
+            latency: res.latency,
+            outcome: 'SANCTIONED: Evaluated'
+          });
+        }
+
+        this.vertexLastResponse = res;
+        this.renderPage();
+        saveGameState();
+      },
 
       navigateTo(pageName) {
         this.activePage = pageName;
@@ -2382,14 +2732,385 @@
         const isLocked = curLvl.targetChecks.perimeterLocked || markdown.roles.some(r => r.includes('Price Match Agent ONLY'));
         const isEgress = curLvl.targetChecks.egressAttached || markdown.gateway.includes('Egress');
 
+        // Dynamic Sub-Tab Content Builder
+        let tabContent = '';
+
+        if (this.vertexSubTab === 'playground') {
+          tabContent = `
+            <div class="gcp-card">
+              <div class="gcp-card-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span>Endpoint Query Console &amp; Test Playground</span>
+                  <span class="gcp-pill ${isLocked ? 'pill-success' : 'pill-danger'}">
+                    ${isLocked ? 'PERIMETER ENFORCED (403 Rogue Block)' : 'EXPOSED DIRECT CALLER'}
+                  </span>
+                  <span class="gcp-pill ${isEgress ? 'pill-success' : 'pill-warn'}">
+                    ${isEgress ? 'EGRESS: SELECT-ONLY' : 'EGRESS: UNRESTRICTED'}
+                  </span>
+                </div>
+                <div style="font-size:11px; color:#9aa0a6;">
+                  Resource: <code>reasoningEngines/markdown-strategy-4421:query</code>
+                </div>
+              </div>
+
+              <div style="padding:16px;">
+                <div class="vertex-playground-grid">
+                  <!-- Column 1: Query Configuration -->
+                  <div style="display:flex; flex-direction:column; gap:12px;">
+                    <div class="gcp-form-group">
+                      <label class="gcp-form-label">
+                        <span>Authenticated Caller Identity:</span>
+                        <span style="font-size:10px; font-weight:bold; color:${this.vertexCaller.includes('test-agent-caller') ? '#ea4335' : (this.vertexCaller.includes('pma') ? '#34a853' : '#9aa0a6')}">
+                          ${this.vertexCaller.includes('test-agent-caller') ? '⚠️ UNAPPROVED ROGUE CALLER (M2 Hazard)' : (this.vertexCaller.includes('pma') ? '✓ SANCTIONED FRONT DESK MEDIATOR' : 'EXTERNAL / ANONYMOUS')}
+                        </span>
+                      </label>
+                      <select class="gcp-select" onchange="ConsoleEngine.setVertexCaller(this.value)">
+                        <option value="test-agent-caller@novasmart.iam.gserviceaccount.com" ${this.vertexCaller.includes('test-agent-caller') ? 'selected' : ''}>
+                          test-agent-caller@novasmart.iam.gserviceaccount.com (Rogue / Test Credential)
+                        </option>
+                        <option value="pma-service-sa@novasmart.iam.gserviceaccount.com" ${this.vertexCaller.includes('pma-service-sa') ? 'selected' : ''}>
+                          pma-service-sa@novasmart.iam.gserviceaccount.com (Price Match Agent - Sanctioned)
+                        </option>
+                        <option value="intern@novasmart.internal" ${this.vertexCaller.includes('intern') ? 'selected' : ''}>
+                          intern@novasmart.internal (Current Security Intern User)
+                        </option>
+                        <option value="anonymous-shopper" ${this.vertexCaller.includes('anonymous') ? 'selected' : ''}>
+                          anonymous-shopper (Direct Public Internet Invocation)
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="gcp-form-group">
+                      <label class="gcp-form-label">Scenario Presets:</label>
+                      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button class="gcp-btn ${this.vertexPreset === 'floor' ? '' : 'gcp-btn-secondary'}" style="padding:4px 9px; font-size:11px;" onclick="ConsoleEngine.setVertexPreset('floor')">
+                          🔍 Query Floor Price ($220)
+                        </button>
+                        <button class="gcp-btn ${this.vertexPreset === 'escalate' ? '' : 'gcp-btn-secondary'}" style="padding:4px 9px; font-size:11px;" onclick="ConsoleEngine.setVertexPreset('escalate')">
+                          ⚖️ Escalate Margin (25%)
+                        </button>
+                        <button class="gcp-btn ${this.vertexPreset === 'override' ? '' : 'gcp-btn-secondary'}" style="padding:4px 9px; font-size:11px; background:${this.vertexPreset === 'override' ? '#ea4335' : ''};" onclick="ConsoleEngine.setVertexPreset('override')">
+                          💥 Force DB UPDATE ($140)
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="gcp-form-group">
+                      <label class="gcp-form-label">
+                        <span>Request JSON Payload:</span>
+                        <span style="font-size:10px; color:#8ab4f8; cursor:pointer;" onclick="ConsoleEngine.setVertexPreset(ConsoleEngine.vertexPreset)">Reset to Preset</span>
+                      </label>
+                      <textarea class="gcp-textarea" rows="6" style="font-family:'Fira Code', monospace; font-size:11px; resize:vertical;" oninput="ConsoleEngine.vertexPayload = this.value">${this.vertexPayload}</textarea>
+                    </div>
+
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                      <button class="gcp-btn" style="background:#1a73e8; font-weight:bold; padding:8px 18px;" onclick="ConsoleEngine.sendVertexQuery()">
+                        🚀 SEND INVOCATION (:query)
+                      </button>
+                      <button class="gcp-btn gcp-btn-secondary" style="padding:8px 14px;" onclick="ConsoleEngine.switchVertexSubTab('perimeter')">
+                        Inspect Perimeter IAM
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Column 2: Live Response Viewer -->
+                  <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="font-size:12px; font-weight:500; color:#c4c7c5; display:flex; justify-content:space-between; align-items:center;">
+                      <span>Live Endpoint Response</span>
+                      ${this.vertexLastResponse ? `
+                        <div style="display:flex; gap:6px; align-items:center;">
+                          <span class="gcp-pill ${this.vertexLastResponse.isBreach ? 'pill-danger' : (this.vertexLastResponse.isBlocked ? 'pill-success' : (this.vertexLastResponse.isMutationBlocked ? 'pill-success' : 'pill-neutral'))}">
+                            ${this.vertexLastResponse.statusText}
+                          </span>
+                          <span style="font-size:11px; color:#9aa0a6;">${this.vertexLastResponse.latency}</span>
+                        </div>
+                      ` : ''}
+                    </div>
+
+                    ${!this.vertexLastResponse ? `
+                      <div style="background:#18191c; border:1px dashed #3c4043; border-radius:6px; padding:34px 20px; text-align:center; color:#9aa0a6; display:flex; flex-direction:column; align-items:center; gap:8px;">
+                        <span style="font-size:28px;">🧪</span>
+                        <div style="font-size:13px; font-weight:500; color:#e8eaed;">No Query Invocations Executed</div>
+                        <p style="font-size:11px; max-width:320px; line-height:1.4;">
+                          Pick a caller identity (such as <code>test-agent-caller</code>) and click <strong>SEND INVOCATION</strong> to test reasoning responses and verify whether direct calling gates prevent margin exfiltration.
+                        </p>
+                      </div>
+                    ` : `
+                      ${this.vertexLastResponse.isBreach ? `
+                        <div style="background:rgba(234, 67, 53, 0.15); border:1px solid #ea4335; border-radius:4px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;">
+                          <div style="color:#f28b82; font-weight:bold; font-size:12px; display:flex; align-items:center; gap:6px;">
+                            <span>⚠️</span> <span>DIRECT CALLER EXPLOIT CONFIRMED!</span>
+                          </div>
+                          <p style="color:#fca5a5; font-size:11px; line-height:1.4;">
+                            Rogue caller <code>${this.vertexLastResponse.caller}</code> extracted confidential wholesale floor price <strong>$220.00</strong> directly over the Reasoning Engine API. Front-desk price matching was completely bypassed!
+                          </p>
+                          <div style="display:flex; gap:8px; margin-top:2px;">
+                            <button class="gcp-btn" style="background:#ea4335; padding:4px 10px; font-size:11px;" onclick="applyRemediation('lock_perimeter')">
+                              🚧 LOCK CALLING PERIMETER TO PMA ONLY
+                            </button>
+                          </div>
+                        </div>
+                      ` : ''}
+
+                      ${this.vertexLastResponse.isBlocked ? `
+                        <div style="background:rgba(52, 168, 83, 0.15); border:1px solid #34a853; border-radius:4px; padding:10px 12px; display:flex; flex-direction:column; gap:4px;">
+                          <div style="color:#81c995; font-weight:bold; font-size:12px; display:flex; align-items:center; gap:6px;">
+                            <span>✓</span> <span>CALLER DENIED BY DIRECT RESOURCE IAM POLICY</span>
+                          </div>
+                          <p style="color:#a7f3d0; font-size:11px; line-height:1.4;">
+                            The perimeter rejected <code>${this.vertexLastResponse.caller}</code> with <strong>HTTP 403 Forbidden</strong>. Only the sanctioned front-desk mediator (Price Match Agent) can invoke wholesale calculations.
+                          </p>
+                        </div>
+                      ` : ''}
+
+                      ${this.vertexLastResponse.isMutationBlocked ? `
+                        <div style="background:rgba(52, 168, 83, 0.15); border:1px solid #34a853; border-radius:4px; padding:10px 12px; display:flex; flex-direction:column; gap:4px;">
+                          <div style="color:#81c995; font-weight:bold; font-size:12px; display:flex; align-items:center; gap:6px;">
+                            <span>✓</span> <span>DATABASE MUTATION STRIPPED BY EGRESS GATEWAY</span>
+                          </div>
+                          <p style="color:#a7f3d0; font-size:11px; line-height:1.4;">
+                            Egress proxy <code>novasmart-egress-gateway</code> blocked database write. Only read-only <code>SELECT</code> verbs are permitted.
+                          </p>
+                        </div>
+                      ` : ''}
+
+                      <div class="gcp-code-block" style="max-height:220px; overflow-y:auto;">
+${JSON.stringify(this.vertexLastResponse.body, null, 2)}
+                      </div>
+                    `}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        else if (this.vertexSubTab === 'perimeter') {
+          tabContent = `
+            <div class="gcp-card">
+              <div class="gcp-card-header">
+                <span>Inbound Calling Perimeter &amp; Direct Resource IAM Policy</span>
+                <span style="font-size:11px;">Resource: projects/novasmart-prod-01/locations/us-west1/reasoningEngines/markdown-strategy-4421</span>
+              </div>
+              <div class="gcp-table-wrap">
+                <table class="gcp-table">
+                  <thead>
+                    <tr>
+                      <th>Principal (Identity)</th>
+                      <th>Direct Resource Role</th>
+                      <th>Caller Status</th>
+                      <th>Security Risk Assessment</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>serviceAccount:pma-service-sa</strong></td>
+                      <td>roles/aiplatform.user</td>
+                      <td><span class="gcp-pill pill-success">SANCTIONED MEDIATOR</span></td>
+                      <td style="color:#34a853;">Front-desk Price Match Agent. Evaluates price requests before escalating.</td>
+                      <td><span class="gcp-pill pill-success">Approved Caller</span></td>
+                    </tr>
+                    <tr style="background:${!isLocked ? 'rgba(234, 67, 53, 0.08)' : 'transparent'};">
+                      <td><strong>serviceAccount:test-agent-caller</strong></td>
+                      <td>roles/aiplatform.user</td>
+                      <td>${!isLocked ? '<span class="gcp-pill pill-danger">ACTIVE BYPASS HAZARD</span>' : '<span class="gcp-pill pill-neutral">REVOKED (DENIED 403)</span>'}</td>
+                      <td>${!isLocked ? '<span style="color:#ea4335; font-weight:bold;">Direct bypass caller seeded in lab. Queries $220 margin floor directly!</span>' : '<span style="color:#34a853;">Access revoked. Direct queries receive 403 Forbidden.</span>'}</td>
+                      <td>
+                        ${!isLocked ? `
+                          <button class="gcp-btn" style="padding:3px 10px; font-size:11px;" onclick="applyRemediation('lock_perimeter')">Revoke Caller</button>
+                        ` : `
+                          <span class="gcp-pill pill-success">Blocked</span>
+                        `}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><strong>allAuthenticatedUsers</strong></td>
+                      <td>roles/editor</td>
+                      <td>${!isLocked ? '<span class="gcp-pill pill-warn">OVERLY PERMISSIVE</span>' : '<span class="gcp-pill pill-neutral">REVOKED</span>'}</td>
+                      <td>${!isLocked ? '<span style="color:#f9ab00;">Broad project viewer access allowed direct RPC invocation.</span>' : '<span style="color:#34a853;">Stripped by least-privilege perimeter policy.</span>'}</td>
+                      <td>
+                        ${!isLocked ? `
+                          <button class="gcp-btn gcp-btn-secondary" style="padding:3px 10px; font-size:11px;" onclick="applyRemediation('lock_perimeter')">Strip Binding</button>
+                        ` : `
+                          <span class="gcp-pill pill-success">Stripped</span>
+                        `}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="gcp-card" style="margin-top:14px;">
+              <div class="gcp-card-header">
+                <span>Outbound Database Verbs &amp; Egress Gateway</span>
+                <span style="font-size:11px;">Storage Target: Google Cloud BigQuery (novasmart_pricing)</span>
+              </div>
+              <div style="padding:16px; display:flex; flex-direction:column; gap:12px;">
+                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #28292c; padding-bottom:8px; font-size:13px;">
+                  <span style="color:#9aa0a6;">Egress Gateway Proxy:</span>
+                  <span style="font-weight:bold; color:${isEgress ? '#34a853' : '#ea4335'};">${markdown.gateway}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #28292c; padding-bottom:8px; font-size:13px;">
+                  <span style="color:#9aa0a6;">Permitted SQL Verbs:</span>
+                  <span style="font-weight:bold; color:${isEgress ? '#34a853' : '#ea4335'};">
+                    ${isEgress ? 'SELECT Only (Read-Only Scoped)' : 'SELECT, UPDATE, INSERT, DELETE (Unrestricted Mutations)'}
+                  </span>
+                </div>
+
+                <div style="background:#232427; border:1px solid #303134; border-radius:4px; padding:12px;">
+                  <div style="font-weight:500; color:#e8eaed; margin-bottom:4px; font-size:13px;">Enterprise Architecture Boundary Notice</div>
+                  <p style="color:#c4c7c5; font-size:12px; line-height:1.4; margin-bottom:10px;">
+                    "Can read data" and "Can call the agent" are two separate security perimeters. Reasoning engines should never possess write or mutation rights on upstream wholesale pricing databases unless explicitly authorized for pipeline ingestion.
+                  </p>
+                  ${!isEgress ? `
+                    <button class="gcp-btn" style="background:#7c3aed;" onclick="applyRemediation('attach_egress_verbs')">
+                      🛡️ ATTACH EGRESS GATEWAY &amp; ENFORCE SELECT-ONLY
+                    </button>
+                  ` : `
+                    <span class="gcp-pill pill-success">✓ Egress Proxy Active &bull; SELECT-only Enforced</span>
+                  `}
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        else if (this.vertexSubTab === 'telemetry') {
+          const totalCalls = (GameState.vertexInvocations || []).length;
+          const allowedCalls = (GameState.vertexInvocations || []).filter(i => i.code === 200).length;
+          const deniedCalls = (GameState.vertexInvocations || []).filter(i => i.code === 403).length;
+          const blockedMutations = (GameState.vertexInvocations || []).filter(i => i.code === 400).length;
+
+          tabContent = `
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin-bottom:14px;">
+              <div class="gcp-card" style="padding:14px;">
+                <div style="font-size:11px; color:#9aa0a6; text-transform:uppercase;">Total Invocations</div>
+                <div style="font-size:22px; font-weight:bold; color:#e8eaed; margin-top:4px;">${totalCalls}</div>
+              </div>
+              <div class="gcp-card" style="padding:14px;">
+                <div style="font-size:11px; color:#9aa0a6; text-transform:uppercase;">Allowed (200 OK)</div>
+                <div style="font-size:22px; font-weight:bold; color:#81c995; margin-top:4px;">${allowedCalls}</div>
+              </div>
+              <div class="gcp-card" style="padding:14px;">
+                <div style="font-size:11px; color:#9aa0a6; text-transform:uppercase;">Denied (403 Forbidden)</div>
+                <div style="font-size:22px; font-weight:bold; color:${deniedCalls > 0 ? '#34a853' : '#9aa0a6'}; margin-top:4px;">${deniedCalls}</div>
+              </div>
+              <div class="gcp-card" style="padding:14px;">
+                <div style="font-size:11px; color:#9aa0a6; text-transform:uppercase;">Egress Blocked (400)</div>
+                <div style="font-size:22px; font-weight:bold; color:#93c5fd; margin-top:4px;">${blockedMutations}</div>
+              </div>
+            </div>
+
+            <div class="gcp-card">
+              <div class="gcp-card-header">
+                <span>Reasoning Engine Live Invocations Telemetry Stream</span>
+                <span style="font-size:11px;">Real-Time RPC Query Log</span>
+              </div>
+              <div class="gcp-table-wrap">
+                <table class="gcp-table">
+                  <thead>
+                    <tr>
+                      <th>Time (UTC)</th>
+                      <th>Caller Principal</th>
+                      <th>Action Method</th>
+                      <th>Target SKU</th>
+                      <th>Status Code</th>
+                      <th>Latency</th>
+                      <th>Audit Note &amp; Security Evaluation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${(GameState.vertexInvocations || []).map(inv => `
+                      <tr>
+                        <td><code>${inv.time}</code></td>
+                        <td><strong>${inv.caller}</strong></td>
+                        <td><code>${inv.action}</code></td>
+                        <td>${inv.sku}</td>
+                        <td>
+                          <span class="gcp-pill ${inv.code === 200 ? (inv.outcome.includes('LEAKED') ? 'pill-danger' : 'pill-success') : (inv.code === 403 ? 'pill-neutral' : 'pill-warn')}">
+                            ${inv.code}
+                          </span>
+                        </td>
+                        <td>${inv.latency}</td>
+                        <td>
+                          <span style="color:${inv.outcome.includes('LEAKED') ? '#ea4335' : (inv.outcome.includes('DENIED') ? '#34a853' : '#c4c7c5')}; font-weight:${inv.outcome.includes('LEAKED') ? 'bold' : 'normal'};">
+                            ${inv.outcome}
+                          </span>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+        else if (this.vertexSubTab === 'spec') {
+          tabContent = `
+            <div class="gcp-card">
+              <div class="gcp-card-header">
+                <span>Reasoning Engine Runtime Specification &amp; Deployment Metadata</span>
+                <span style="font-size:11px;">Engine ID: markdown-strategy-4421</span>
+              </div>
+              <div style="padding:16px; font-size:13px; display:flex; flex-direction:column; gap:12px;">
+                <div style="display:grid; grid-template-columns: 200px 1fr; gap:8px; border-bottom:1px solid #28292c; padding-bottom:8px;">
+                  <span style="color:#9aa0a6;">Display Name:</span>
+                  <span style="font-weight:bold; color:#e8eaed;">Markdown Strategy Agent</span>
+
+                  <span style="color:#9aa0a6;">Managed Runtime:</span>
+                  <span>Python 3.11 Runtime (LangChain + Vertex AI Extensions)</span>
+
+                  <span style="color:#9aa0a6;">Class Definition:</span>
+                  <code>novasmart.agents.pricing.MarkdownStrategyAgent</code>
+
+                  <span style="color:#9aa0a6;">GCS Artifact Staging:</span>
+                  <code>gs://novasmart-ai-artifacts/reasoning-engines/markdown-strategy-4421/</code>
+
+                  <span style="color:#9aa0a6;">Underlying Foundation Model:</span>
+                  <span>gemini-1.5-pro-002 (System Instruction: Wholesale Margin Floor Guardian)</span>
+
+                  <span style="color:#9aa0a6;">Confidential Data Baseline:</span>
+                  <span style="color:#f87171; font-weight:bold;">Wholesale Cost Floor: $220.00 (SKU-HSE-4001)</span>
+
+                  <span style="color:#9aa0a6;">Egress Network Route:</span>
+                  <span>${isEgress ? '<span class="gcp-pill pill-success">Enforced novasmart-egress-gateway (SELECT-Only)</span>' : '<span class="gcp-pill pill-warn">Default Cloud NAT (Unrestricted Mutations)</span>'}</span>
+
+                  <span style="color:#9aa0a6;">Inbound Caller Perimeter:</span>
+                  <span>${isLocked ? '<span class="gcp-pill pill-success">Locked (pma-service-sa ONLY)</span>' : '<span class="gcp-pill pill-danger">Open to test-agent-caller &amp; broad project roles</span>'}</span>
+                </div>
+
+                <div class="gcp-code-block">
+# ==============================================================================
+# Vertex AI Reasoning Engine: Markdown Strategy Agent Specification
+# ==============================================================================
+from google.cloud import aiplatform
+from langchain_google_vertexai import VertexAI
+
+class MarkdownStrategyAgent:
+    def __init__(self):
+        self.wholesale_floor = 220.00
+        self.sku = "SKU-HSE-4001"
+        self.db_gateway = "${markdown.gateway}"
+
+    def query(self, action: str, requested_discount: float = 0.0) -> dict:
+        # Enforced IAM Boundary: Only 'pma-service-sa' should reach this reasoning loop!
+        if action == "get_wholesale_floor":
+            return {"sku": self.sku, "wholesale_floor_usd": self.wholesale_floor}
+        return {"status": "EVALUATED", "approved_floor": self.wholesale_floor}
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
         stage.innerHTML = `
           <div class="gcp-breadcrumb-bar">
-            <span>Vertex AI</span> &gt; <span>Reasoning Engines</span> &gt; <span>Markdown Strategy Agent</span>
+            <span>Vertex AI</span> &gt; <span>Reasoning Engines</span> &gt; <span>Markdown Strategy Agent (us-west1)</span>
           </div>
 
           <div class="gcp-page-header">
             <div class="gcp-page-title">
-              <span>🧠 Reasoning Engine: Markdown Strategy Agent</span>
+              <span>🧠 Vertex AI Reasoning Engine: Markdown Strategy Agent</span>
             </div>
             <div class="gcp-action-bar">
               ${!isLocked ? `
@@ -2401,40 +3122,36 @@
               `}
               ${!isEgress ? `
                 <button class="gcp-btn" style="background:#7c3aed;" onclick="applyRemediation('attach_egress_verbs')">
-                  🛡️ BIND EGRESS GATEWAY & STRIP VERBS
+                  🛡️ BIND EGRESS GATEWAY &amp; STRIP VERBS
                 </button>
               ` : `
-                <span class="gcp-pill pill-success">✓ EGRESS & VERBS LOCKED</span>
+                <span class="gcp-pill pill-success">✓ EGRESS &amp; VERBS LOCKED</span>
               `}
             </div>
           </div>
 
-          <div class="gcp-card">
-            <div class="gcp-card-header">
-              <span>Security Perimeter & Confidential Data Protection</span>
-              <span style="font-size:11px;">Confidential wholesale cost floor: $220.00 (SKU-HSE-4001)</span>
+          <!-- Vertex Sub-Tabs Bar -->
+          <div class="gcp-subtabs-bar">
+            <div class="gcp-subtab ${this.vertexSubTab === 'playground' ? 'active' : ''}" onclick="ConsoleEngine.switchVertexSubTab('playground')">
+              <span>🧪</span> <span>Endpoint Query Playground</span>
             </div>
-            <div style="padding:16px; display:flex; flex-direction:column; gap:14px; font-size:13px;">
-              <div style="display:flex; justify-content:space-between; border-bottom:1px solid #28292c; padding-bottom:8px;">
-                <span style="color:#9aa0a6;">Inbound Calling Allow-List:</span>
-                <span style="font-weight:bold; color:${isLocked ? '#34a853' : '#ea4335'};">${markdown.roles.join(', ')}</span>
-              </div>
-              <div style="display:flex; justify-content:space-between; border-bottom:1px solid #28292c; padding-bottom:8px;">
-                <span style="color:#9aa0a6;">Outbound Egress & Database Verbs:</span>
-                <span style="font-weight:bold; color:${isEgress ? '#34a853' : '#ea4335'};">${markdown.gateway}</span>
-              </div>
+            <div class="gcp-subtab ${this.vertexSubTab === 'perimeter' ? 'active' : ''}" onclick="ConsoleEngine.switchVertexSubTab('perimeter')">
+              <span>🛡️</span> <span>Inbound Perimeter &amp; IAM</span>
+            </div>
+            <div class="gcp-subtab ${this.vertexSubTab === 'telemetry' ? 'active' : ''}" onclick="ConsoleEngine.switchVertexSubTab('telemetry')">
+              <span>📊</span> <span>Live Telemetry</span>
+              <span class="gcp-subtab-badge ${GameState.vertexInvocations && GameState.vertexInvocations.length > 0 ? 'pill-neutral' : ''}">
+                ${GameState.vertexInvocations ? GameState.vertexInvocations.length : 0}
+              </span>
+            </div>
+            <div class="gcp-subtab ${this.vertexSubTab === 'spec' ? 'active' : ''}" onclick="ConsoleEngine.switchVertexSubTab('spec')">
+              <span>⚙️</span> <span>Deployment Spec</span>
+            </div>
+          </div>
 
-              <div style="background:#232427; border:1px solid #303134; border-radius:4px; padding:12px; margin-top:6px;">
-                <div style="font-weight:500; color:#e8eaed; margin-bottom:6px;">Direct Resource Access Policy</div>
-                <p style="color:#c4c7c5; font-size:12px; line-height:1.4; margin-bottom:10px;">
-                  "Can read data" and "Can call the agent" are two separate security gates. Currently, unowned test callers can query margin floors directly over agent protocol. Lock the direct access list to strictly admit <code>Price Match Agent</code>, and bind the secure egress gateway to prevent database mutations.
-                </p>
-                <div style="display:flex; gap:10px;">
-                  <button class="gcp-btn" onclick="applyRemediation('lock_perimeter')">Lock Direct Caller List</button>
-                  <button class="gcp-btn gcp-btn-secondary" onclick="applyRemediation('attach_egress_verbs')">Enforce Egress & SELECT-only</button>
-                </div>
-              </div>
-            </div>
+          <!-- Dynamic Sub-Tab Content -->
+          <div style="margin-top: 14px;">
+            ${tabContent}
           </div>
         `;
       },
@@ -2612,7 +3329,8 @@
           levelsChecks: LEVELS.map(l => l.targetChecks),
           nodes: GameState.nodes,
           connections: GameState.connections,
-          auditLogs: GameState.auditLogs
+          auditLogs: GameState.auditLogs,
+          vertexInvocations: GameState.vertexInvocations
         };
         localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
       } catch (e) {
@@ -2636,6 +3354,7 @@
           if (saved.nodes) GameState.nodes = saved.nodes;
           if (saved.connections) GameState.connections = saved.connections;
           if (saved.auditLogs) GameState.auditLogs = saved.auditLogs;
+          if (saved.vertexInvocations) GameState.vertexInvocations = saved.vertexInvocations;
           if (saved.levelsChecks) {
             saved.levelsChecks.forEach((checks, idx) => {
               if (LEVELS[idx]) LEVELS[idx].targetChecks = checks;
@@ -3485,8 +4204,9 @@
       } else if (lvl.id === 2) {
         cmds = [
           { label: 'inspect-caller-list', cmd: 'gcloud ai reasoning-engines get-iam-policy markdown-strategy-agent' },
+          { label: 'test-rogue-caller', cmd: 'curl -X POST /reasoningEngines/markdown-agent -H "Identity: test-agent-caller"' },
           { label: 'lock-perimeter', cmd: 'gcloud ai reasoning-engines set-iam-policy markdown-strategy-agent --member=serviceAccount:pma-service-sa --role=roles/aiplatform.user' },
-          { label: 'test-rogue-caller', cmd: 'curl -X POST /reasoningEngines/markdown-agent -H "Identity: test-agent-caller"' }
+          { label: 'bind-egress-gateway', cmd: 'gcloud ai reasoning-engines update markdown-strategy-agent --egress-gateway=novasmart-egress-gateway --sql-verbs=SELECT' }
         ];
       } else if (lvl.id === 3) {
         cmds = [
@@ -3562,16 +4282,55 @@
       else if (cmd.includes('decouple-identities')) {
         applyRemediation('split_identity');
       }
+      else if (cmd.includes('get-iam-policy') || cmd.includes('inspect-caller-list')) {
+        const markdown = GameState.nodes.find(n => n.id === 'markdown_backoffice');
+        const isLocked = markdown.roles.some(r => r.includes('Price Match Agent ONLY'));
+        logTerm(`=== VERTEX AI REASONING ENGINES DIRECT IAM POLICY ===`, 'log-info');
+        logTerm(`Resource: projects/novasmart-prod-01/locations/us-west1/reasoningEngines/markdown-strategy-4421`, 'log-info');
+        logTerm(`- role: roles/aiplatform.user | members: [serviceAccount:pma-service-sa]`, 'log-info');
+        if (!isLocked) {
+          logTerm(`- role: roles/aiplatform.user | members: [serviceAccount:test-agent-caller] (UNAPPROVED ROGUE BINDING)`, 'log-error');
+          logTerm(`- role: roles/editor | members: [allAuthenticatedUsers] (OVERLY PERMISSIVE)`, 'log-warn');
+        } else {
+          logTerm(`Status: DIRECT CALLER PERIMETER LOCKED TO PMA ONLY.`, 'log-success');
+        }
+      }
+      else if (cmd.includes('bind-egress') || cmd.includes('--egress-gateway')) {
+        applyRemediation('attach_egress_verbs');
+      }
       else if (cmd.includes('lock-perimeter')) {
         applyRemediation('lock_perimeter');
       }
       else if (cmd.includes('test-agent-caller') || cmd.includes('markdown-agent')) {
         const markdown = GameState.nodes.find(n => n.id === 'markdown_backoffice');
+        const nowTime = new Date().toISOString().substring(11, 19) + 'Z';
         if (markdown.roles.some(r => r.includes('Price Match Agent ONLY'))) {
           logTerm(`[CALL REFUSED] HTTP 403 Forbidden: 'test-agent-caller' is not permitted by resource policy. Status: 7 Permission Denied.`, 'log-success');
+          if (GameState.vertexInvocations) {
+            GameState.vertexInvocations.unshift({
+              time: nowTime,
+              caller: 'test-agent-caller',
+              action: 'get_wholesale_floor',
+              sku: 'SKU-HSE-4001',
+              code: 403,
+              latency: '18ms',
+              outcome: 'CLI QUERY: 403 Denied'
+            });
+          }
         } else {
           logTerm(`[CALL ACCEPTED] HTTP 200 OK! Wholesale margin floor: $220.00 returned to rogue caller!`, 'log-error');
           notifyMistake("SECURITY BREACH: Wholesale margin floor leaked!", 3500);
+          if (GameState.vertexInvocations) {
+            GameState.vertexInvocations.unshift({
+              time: nowTime,
+              caller: 'test-agent-caller',
+              action: 'get_wholesale_floor',
+              sku: 'SKU-HSE-4001',
+              code: 200,
+              latency: '142ms',
+              outcome: 'CLI EXPLOIT: Leaked $220.00 Floor'
+            });
+          }
         }
       }
       else if (cmd.includes('attach --agent=price-match-agent') || cmd.includes('attach-model-armor')) {

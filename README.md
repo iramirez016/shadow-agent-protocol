@@ -96,6 +96,7 @@ flowchart LR
 | **A.G.Y.-4000 Hint System** | Interactive progressive hint button (`💡 HINT 1/3`) pulsing when mistakes or loss spikes occur, guiding interns through conceptual clues to actionable CLI commands. |
 | **Scalable Panel Layouts** | Instant layout switching between `◫ Balanced`, `⬚ Focus Stage`, `▤ Focus Console`, and `▥ Focus Deck`, plus individual panel `⤢ Enlarge / Restore` toggles. |
 | **Mobile & Retina Optimization** | High-DPI canvas scaling (`devicePixelRatio`), unified Pointer Events (`touch-action: none`, min 44px tap targets), `100dvh` safe-area dynamic viewports, auto-play Web Audio unlock gate, and responsive Flash HUD / Cloud Console / Split view switcher. |
+| **Vertex AI Endpoint Tester** | Interactive Reasoning Engine query playground (`:query`) with caller credential switching (`test-agent-caller` vs `pma-service-sa`), live telemetry audit stream, direct resource IAM policy inspection, and egress verb enforcement. |
 | **`localStorage` Persistence** | Auto-saves completed levels, checklist objectives, scores, and audit logs. Resume directly where you left off on browser reload, with a `🔄 RESET SIM` option. |
 | **Cloud Shell & Quick Chips** | Built-in CLI emulator supporting realistic `gcloud`, `bq`, and `curl` commands with 1-click quick-action chips. |
 
