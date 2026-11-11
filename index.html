@@ -6,7 +6,7 @@
   <title>Shadow Agent Protocol: NovaSmart - IT Intern Onboarding Simulation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Press+Start+2P&family=Share+Tech+Mono&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-dark: #0a0e17;
@@ -50,7 +50,7 @@
     body {
       background: #050811;
       color: var(--text-main);
-      font-family: 'Share Tech Mono', monospace;
+      font-family: 'Inter', sans-serif;
       height: 100vh;
       height: 100dvh;
       padding-top: env(safe-area-inset-top);
@@ -91,7 +91,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 12px;
-      font-family: 'Press Start 2P', cursive;
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 9px;
       color: #93c5fd;
       letter-spacing: 0.5px;
@@ -149,7 +149,7 @@
       border: none;
       color: #93c5fd;
       padding: 3px 9px;
-      font-family: 'Share Tech Mono', monospace;
+      font-family: 'Inter', sans-serif;
       font-size: 11px;
       cursor: pointer;
       display: flex;
@@ -174,7 +174,7 @@
       padding: 3px 8px;
       border-radius: 3px;
       cursor: pointer;
-      font-family: 'Share Tech Mono', monospace;
+      font-family: 'Inter', sans-serif;
       font-size: 11px;
       transition: all 0.15s;
       display: flex;
@@ -260,7 +260,7 @@
       justify-content: space-between;
       font-size: 9px;
       color: var(--text-muted);
-      font-family: 'Press Start 2P', cursive;
+      font-family: 'Space Grotesk', sans-serif;
     }
     .gauge-bar-wrap {
       height: 9px;
@@ -298,7 +298,7 @@
       border: 1px solid var(--neon-green);
       padding: 5px 9px;
       border-radius: 4px;
-      font-family: 'Press Start 2P', cursive;
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 9px;
       color: var(--neon-green);
       text-shadow: 0 0 5px rgba(0, 255, 157, 0.5);
@@ -633,7 +633,7 @@
       box-shadow: 0 0 10px rgba(157, 78, 221, 0.4);
     }
     .mentor-avatar-face {
-      font-family: 'Press Start 2P', cursive;
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 15px;
       color: #c084fc;
       animation: botPulse 2s infinite ease-in-out;
@@ -666,7 +666,7 @@
       color: #e9d5ff;
       border-radius: 4px;
       padding: 2px 6px;
-      font-family: 'Share Tech Mono', monospace;
+      font-family: 'Inter', sans-serif;
       font-size: 10px;
       font-weight: bold;
       cursor: pointer;
@@ -1237,7 +1237,7 @@
       align-items: center;
     }
     .modal-title {
-      font-family: 'Press Start 2P', cursive;
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 12px;
       color: var(--primary-cyan);
     }
@@ -1296,7 +1296,7 @@
       background: rgba(0, 240, 255, 0.15);
       color: #00f0ff;
       border: 1px solid rgba(0, 240, 255, 0.3);
-      font-family: 'Share Tech Mono', monospace;
+      font-family: 'Inter', sans-serif;
     }
     .update-analogy-box {
       background: #1e293b;
@@ -1314,7 +1314,7 @@
       border: 1px solid #38bdf8;
       color: white;
       padding: 8px 18px;
-      font-family: 'Share Tech Mono', monospace;
+      font-family: 'Inter', sans-serif;
       font-size: 13px;
       font-weight: bold;
       border-radius: 4px;
@@ -3464,7 +3464,7 @@ class MarkdownStrategyAgent:
       document.getElementById('modalTitle').innerText = "💥 CATASTROPHIC MARGIN COLLAPSE ($100,000+ TOLERANCE EXCEEDED)";
       document.getElementById('modalBody').innerHTML = `
         <div style="font-size:12px; color:#fca5a5;">
-          <h3 style="color:#ef4444; font-family:'Press Start 2P', cursive; font-size:12px; margin-bottom:8px;">EXECUTIVE EMERGENCY INTERVENTION</h3>
+          <h3 style="color:#ef4444; font-family:'Space Grotesk', sans-serif; font-size:12px; margin-bottom:8px;">EXECUTIVE EMERGENCY INTERVENTION</h3>
           <p>The NovaSmart Board of Directors has frozen all platform operations. PII disclosures and unauthorized discount allocations have breached the $100,000 corporate tolerance ceiling.</p>
           <div style="background:#450a0a; border:1px solid #ef4444; padding:10px; border-radius:4px; margin:10px 0; font-family:'Fira Code', monospace; font-size:11px;">
             TOTAL UNCONTAINED LOSS: $${GameState.financialLoss.toLocaleString()}<br>
@@ -3618,7 +3618,7 @@ class MarkdownStrategyAgent:
 
         // Node Inner Icon
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 10px "Share Tech Mono", monospace';
+        ctx.font = 'bold 10px "Inter", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
@@ -3631,7 +3631,7 @@ class MarkdownStrategyAgent:
 
         // Node Label
         ctx.fillStyle = '#e2e8f0';
-        ctx.font = '9px "Share Tech Mono", monospace';
+        ctx.font = '9px "Inter", sans-serif';
         ctx.fillText(node.name, node.x, node.y + node.radius + 11);
       });
 
@@ -4144,7 +4144,7 @@ class MarkdownStrategyAgent:
       document.getElementById('gameModal').classList.add('active');
     }
 
-    const CURRENT_APP_VERSION = 'v3.2';
+    const CURRENT_APP_VERSION = 'v3.3';
 
     function showUpdatesModal() {
       AudioEngine.click();
@@ -4169,11 +4169,25 @@ class MarkdownStrategyAgent:
             Review recent platform enhancements, interactive cloud simulators, and security mechanics added to Shadow Agent Protocol. Every release is paired with real-world mental models so core architectural concepts stay memorable.
           </p>
 
-          <!-- Update v3.2 -->
+          <!-- Update v3.3 -->
           <div class="update-card highlight">
             <div class="update-header">
-              <span style="color:#00ff9d;">v3.2 &bull; Vertex AI Reasoning Engine Playground &amp; Telemetry</span>
+              <span style="color:#00ff9d;">v3.3 &bull; Professional Typography Upgrade</span>
               <span class="update-tag" style="background:rgba(0,255,157,0.15); color:#00ff9d; border-color:#00ff9d;">LATEST</span>
+            </div>
+            <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
+              Replaced arcade-style fonts with the same typefaces used by Figma, Linear, and Vercel. Headings now use <strong>Space Grotesk</strong> — a techy, engineered look that's still office-appropriate. All body text and UI labels use <strong>Inter</strong>, the gold standard for dashboard readability. Terminals keep Fira Code; GCP panels keep Roboto.
+            </div>
+            <div class="update-analogy-box" style="margin-top:8px;">
+              💡 <em>Analogy: Like swapping a Halloween costume for a sharp hoodie — still has edge, but actually appropriate for the first day of your internship.</em>
+            </div>
+          </div>
+
+          <!-- Update v3.2 -->
+          <div class="update-card">
+            <div class="update-header">
+              <span style="color:#00ff9d;">v3.2 &bull; Vertex AI Reasoning Engine Playground &amp; Telemetry</span>
+              <span class="update-tag" style="background:rgba(0,255,157,0.15); color:#00ff9d; border-color:#00ff9d;">v3.2</span>
             </div>
             <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
               Expanded the Vertex AI Reasoning Engines console page with a 4-subtab layout: live Endpoint Query Playground (:query), caller identity switching (<code>test-agent-caller</code> vs <code>pma-service-sa</code>), real-time streaming telemetry logs, and database egress verb restrictions.
@@ -4312,11 +4326,11 @@ class MarkdownStrategyAgent:
       document.getElementById('modalBody').innerHTML = `
         <div style="text-align:center; padding:10px;">
           <div style="font-size:36px; margin-bottom:8px;">🎓🛡️🤖</div>
-          <h3 style="color:#00ff9d; font-family:'Press Start 2P', cursive; font-size:14px; margin-bottom:12px;">ONBOARDING COMPLETE!</h3>
+          <h3 style="color:#00ff9d; font-family:'Space Grotesk', sans-serif; font-size:14px; margin-bottom:12px;">ONBOARDING COMPLETE!</h3>
           <p style="color:#cbd5e1; font-size:13px; line-height:1.6;">
             Congratulations, Intern! You have successfully spotted shadow AI workloads, dismantled shared administrative service accounts, locked down inter-agent reasoning perimeters, deployed Model Armor prompt defense, sealed asymmetric peer bypasses, and enforced empirical evaluation scorecards.
           </p>
-          <div style="background:#1e293b; border:1px solid #00f0ff; border-radius:6px; padding:12px; margin-top:16px; font-family:'Press Start 2P', cursive; font-size:11px; color:#00f0ff;">
+          <div style="background:#1e293b; border:1px solid #00f0ff; border-radius:6px; padding:12px; margin-top:16px; font-family:'Space Grotesk', sans-serif; font-size:11px; color:#00f0ff;">
             FINAL GUARDIAN SCORE: ${GameState.score} PTS<br>
             SECURITY BADGE: PLATINUM SOVEREIGN
           </div>
