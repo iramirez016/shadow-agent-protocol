@@ -1619,6 +1619,74 @@
     }
   </style>
 </head>
+
+<script>
+  const WORKER_BASE = 'https://shadow-agent-protocol.iramirez-b6a.workers.dev';
+  let currentFinalScore = 0;
+  let sessionToken = null;
+
+  function onGameWin(score) {
+    currentFinalScore = score;
+    document.getElementById('final-score-display').textContent = score;
+    document.getElementById('win-overlay').style.display = 'flex';
+  }
+
+  document.getElementById('submit-btn').addEventListener('click', async () => {
+    const playerName = document.getElementById('player-name').value.trim();
+    const email = document.getElementById('player-email').value.trim();
+    const statusMsg = document.getElementById('status-msg');
+
+    if (!playerName || !email) {
+      statusMsg.textContent = 'Please enter both your name and email.';
+      return;
+    }
+
+    statusMsg.textContent = 'Submitting score and generating PDF...';
+
+    try {
+      // 1. Start guest session via Worker (key stays server-side)
+      const authRes = await fetch(`${WORKER_BASE}/api/lootlocker/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const authData = await authRes.json();
+      sessionToken = authData.session_token;
+
+      // 2. Set name + submit score via Worker
+      await fetch(`${WORKER_BASE}/api/lootlocker/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerName, score: currentFinalScore, sessionToken })
+      });
+
+      // 3. Trigger PDF certificate email via Worker
+      await fetch(`${WORKER_BASE}/api/generate-certificate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerName, email, score: currentFinalScore })
+      });
+
+      statusMsg.textContent = 'Score posted and PDF certificate sent to your inbox!';
+      loadTopScores();
+    } catch (error) {
+      statusMsg.textContent = 'Something went wrong. Please try again.';
+      console.error(error);
+    }
+  });
+
+  async function loadTopScores() {
+    const res = await fetch(`${WORKER_BASE}/api/lootlocker/leaderboard`, {
+      headers: { 'x-session-token': sessionToken }
+    });
+    const data = await res.json();
+    const list = document.getElementById('leaderboard-list');
+    list.innerHTML = '<h3>Top 5 Players</h3>' + data.items.map(
+      (entry) => `<li>#${entry.rank} ${entry.player.name}: ${entry.score}</li>`
+    ).join('');
+  }
+</script>
+
+
 <body>
 
   <!-- Flash Player Application Container -->
@@ -1707,7 +1775,19 @@
               <button class="flash-btn-mini" onclick="setViewMode('split')">🔲 Split</button>
             </div>
           </div>
+
           <canvas id="topologyCanvas"></canvas>
+            <div id="win-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); color: white; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
+              <h2>You Beat the Game!</h2>
+              <p>Final Score: <span id="final-score-display">0</span></p>
+              
+              <input type="text" id="player-name" placeholder="Enter your name" required style="margin: 8px; padding: 10px; width: 250px;" />
+              <input type="email" id="player-email" placeholder="Enter your email for PDF" required style="margin: 8px; padding: 10px; width: 250px;" />
+              <button id="submit-btn" style="margin: 12px; padding: 10px 20px; cursor: pointer;">Submit Score & Email PDF</button>
+              
+              <p id="status-msg"></p>
+              <ul id="leaderboard-list" style="list-style: none; padding: 0; margin-top: 15px;"></ul>
+            </div>
           <div class="canvas-legend">
             <div class="legend-item"><div class="legend-dot" style="background:#00ff9d;"></div> Sanctioned</div>
             <div class="legend-item"><div class="legend-dot" style="background:#ff3366;"></div> Shadow IT / Rogue</div>
