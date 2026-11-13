@@ -4417,9 +4417,15 @@ class MarkdownStrategyAgent:
         </div>
       `;
       document.getElementById('modalFooter').innerHTML = `
+        <button class="btn-action" onclick="openCertificatePopup()">EMAIL PDF CERTIFICATE</button>
         <button class="btn-action btn-success" onclick="confirmResetSimulation()">REPLAY SIMULATION</button>
       `;
       modal.classList.add('active');
+    }
+
+    function openCertificatePopup() {
+      closeModal();
+      onGameWin(GameState.score);
     }
 
     /* =====================================================================
