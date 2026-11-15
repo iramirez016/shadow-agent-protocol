@@ -165,6 +165,17 @@ gh repo create shadow-agent-protocol --public --source=. --remote=origin --push
 
 ---
 
+## 🤝 Contributing & Pull Request Guidelines
+
+To keep the game experience and learning changelog cohesive, all contributors and agent assistants must follow these standards when opening PRs:
+
+1. **Update the In-Game Updates Section**: Every PR must increment `CURRENT_APP_VERSION` in `index.html` and add an entry to `showUpdatesModal()`. Each entry must include a clear summary of changes and a memorable real-world mental model / analogy.
+2. **Pre-commit Verification**: Test `index.html` locally to ensure zero syntax errors, intact audio cues, and seamless switching between `Flash HUD`, `Cloud Console`, and `Split` view modes.
+3. **Structured Commits**: Format commit messages according to [Conventional Commits](https://www.conventionalcommits.org/) (e.g., `feat(game): ...`, `fix(ui): ...`).
+4. **Clean Staging**: Never commit OS artifacts (`.DS_Store`, `Thumbs.db`) or binary zip dumps.
+
+---
+
 ## 📜 License
 
 This project is licensed under the **MIT License** — feel free to use, modify, and distribute this simulation for educational and enterprise onboarding programs.
