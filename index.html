@@ -1626,64 +1626,141 @@
   let sessionToken = null;
 
   function onGameWin(score) {
-    currentFinalScore = score;
-    document.getElementById('final-score-display').textContent = score;
-    document.getElementById('win-overlay').style.display = 'flex';
+    currentFinalScore = (typeof score === 'number') ? score : (window.GameState && GameState.score ? GameState.score : 0);
+    const scoreDisp = document.getElementById('final-score-display');
+    if (scoreDisp) scoreDisp.textContent = currentFinalScore;
+    const overlay = document.getElementById('win-overlay');
+    if (overlay) {
+      overlay.classList.add('active');
+      overlay.style.display = 'flex';
+    }
   }
 
-  document.getElementById('submit-btn').addEventListener('click', async () => {
-    const playerName = document.getElementById('player-name').value.trim();
-    const email = document.getElementById('player-email').value.trim();
+  function closeCertificatePopup() {
+    const overlay = document.getElementById('win-overlay');
+    if (overlay) {
+      overlay.classList.remove('active');
+      overlay.style.display = 'none';
+    }
+  }
+
+  async function submitScoreAndEmailCertificate() {
+    const playerNameInput = document.getElementById('player-name');
+    const emailInput = document.getElementById('player-email');
+    const submitBtn = document.getElementById('submit-btn');
     const statusMsg = document.getElementById('status-msg');
+    const downloadWrap = document.getElementById('cert-download-wrap');
+    const downloadLink = document.getElementById('cert-download-link');
+
+    const playerName = playerNameInput ? playerNameInput.value.trim() : '';
+    const email = emailInput ? emailInput.value.trim() : '';
 
     if (!playerName || !email) {
-      statusMsg.textContent = 'Please enter both your name and email.';
+      if (statusMsg) {
+        statusMsg.style.color = '#f87171';
+        statusMsg.textContent = '⚠️ Please enter both your name and email address.';
+      }
       return;
     }
 
-    statusMsg.textContent = 'Submitting score and generating PDF...';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'PROCESSING...';
+    }
+    if (statusMsg) {
+      statusMsg.style.color = '#38bdf8';
+      statusMsg.textContent = '⏳ Submitting score and generating PDF certificate...';
+    }
 
+    // Step A: Attempt LootLocker Leaderboard Submission (non-fatal if it fails)
     try {
-      // 1. Start guest session via Worker (key stays server-side)
-      const authRes = await fetch(`${WORKER_BASE}/api/lootlocker/session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const authData = await authRes.json();
-      sessionToken = authData.session_token;
+      if (!sessionToken) {
+        const authRes = await fetch(`${WORKER_BASE}/api/lootlocker/session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (authRes.ok) {
+          const authData = await authRes.json();
+          sessionToken = authData.session_token;
+        }
+      }
 
-      // 2. Set name + submit score via Worker
-      await fetch(`${WORKER_BASE}/api/lootlocker/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerName, score: currentFinalScore, sessionToken })
-      });
+      if (sessionToken) {
+        await fetch(`${WORKER_BASE}/api/lootlocker/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playerName, score: currentFinalScore, sessionToken })
+        });
+        loadTopScores();
+      }
+    } catch (llErr) {
+      console.warn('LootLocker leaderboard submission non-fatal notice:', llErr);
+    }
 
-      // 3. Trigger PDF certificate email via Worker
-      await fetch(`${WORKER_BASE}/api/generate-certificate`, {
+    // Step B: Generate PDF certificate and send via Resend
+    try {
+      const certRes = await fetch(`${WORKER_BASE}/api/generate-certificate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ playerName, email, score: currentFinalScore })
       });
 
-      statusMsg.textContent = 'Score posted and PDF certificate sent to your inbox!';
-      loadTopScores();
-    } catch (error) {
-      statusMsg.textContent = 'Something went wrong. Please try again.';
-      console.error(error);
+      const certData = await certRes.json();
+
+      if (certRes.ok && certData.success) {
+        // Direct browser download option if PDF base64 is available
+        if (certData.pdfBase64 && downloadWrap && downloadLink) {
+          downloadLink.href = 'data:application/pdf;base64,' + certData.pdfBase64;
+          downloadWrap.style.display = 'block';
+        }
+
+        if (certData.emailSent) {
+          statusMsg.style.color = '#00ff9d';
+          statusMsg.innerHTML = '✓ Score recorded &amp; official certificate emailed to <strong>' + email + '</strong>!';
+        } else {
+          statusMsg.style.color = '#fde047';
+          statusMsg.innerHTML = '✓ Certificate generated! You can download it directly below. (Email status: ' + (certData.emailError || 'Pending dispatch') + ')';
+        }
+      } else {
+        throw new Error(certData.error || 'Failed to generate certificate.');
+      }
+    } catch (certErr) {
+      console.error('Certificate generation error:', certErr);
+      if (statusMsg) {
+        statusMsg.style.color = '#f87171';
+        statusMsg.textContent = '⚠️ Could not generate certificate: ' + certErr.message;
+      }
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'SUBMIT SCORE & GENERATE CERTIFICATE';
+      }
     }
-  });
+  }
 
   async function loadTopScores() {
-    const res = await fetch(`${WORKER_BASE}/api/lootlocker/leaderboard`, {
-      headers: { 'x-session-token': sessionToken }
-    });
-    const data = await res.json();
-    const list = document.getElementById('leaderboard-list');
-    list.innerHTML = '<h3>Top 5 Players</h3>' + data.items.map(
-      (entry) => `<li>#${entry.rank} ${entry.player.name}: ${entry.score}</li>`
-    ).join('');
+    try {
+      const res = await fetch(`${WORKER_BASE}/api/lootlocker/leaderboard`, {
+        headers: sessionToken ? { 'x-session-token': sessionToken } : {}
+      });
+      const data = await res.json();
+      const list = document.getElementById('leaderboard-list');
+      if (list && data && Array.isArray(data.items)) {
+        list.innerHTML = data.items.map(
+          (entry) => `<li style="padding:2px 0;">#${entry.rank} &bull; ${entry.player ? (entry.player.name || 'Anonymous') : 'Agent'} &mdash; <span style="color:#00ff9d;">${entry.score} pts</span></li>`
+        ).join('');
+      }
+    } catch (e) {
+      console.warn('Leaderboard fetch non-fatal notice:', e);
+    }
   }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('submit-btn');
+    if (btn) {
+      btn.addEventListener('click', submitScoreAndEmailCertificate);
+    }
+  });
 </script>
 
 
@@ -1777,17 +1854,6 @@
           </div>
 
           <canvas id="topologyCanvas"></canvas>
-            <div id="win-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); color: white; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
-              <h2>You Beat the Game!</h2>
-              <p>Final Score: <span id="final-score-display">0</span></p>
-              
-              <input type="text" id="player-name" placeholder="Enter your name" required style="margin: 8px; padding: 10px; width: 250px;" />
-              <input type="email" id="player-email" placeholder="Enter your email for PDF" required style="margin: 8px; padding: 10px; width: 250px;" />
-              <button id="submit-btn" style="margin: 12px; padding: 10px 20px; cursor: pointer;">Submit Score & Email PDF</button>
-              
-              <p id="status-msg"></p>
-              <ul id="leaderboard-list" style="list-style: none; padding: 0; margin-top: 15px;"></ul>
-            </div>
           <div class="canvas-legend">
             <div class="legend-item"><div class="legend-dot" style="background:#00ff9d;"></div> Sanctioned</div>
             <div class="legend-item"><div class="legend-dot" style="background:#ff3366;"></div> Shadow IT / Rogue</div>
@@ -1931,6 +1997,54 @@
         </div>
         <div class="modal-footer" id="modalFooter">
           <button class="btn-action" onclick="closeModal()">PROCEED</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Certificate & Leaderboard Win Overlay -->
+    <div class="modal-overlay" id="win-overlay" style="z-index: 200;">
+      <div class="modal-box" style="max-width: 520px;">
+        <div class="modal-header">
+          <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+            <span>🎓</span>
+            <span>NOVASMART PROTOCOL // CERTIFICATE OF COMPLETION</span>
+          </div>
+          <button class="flash-btn-mini" onclick="closeCertificatePopup()">✕</button>
+        </div>
+        <div class="modal-body" style="font-size:12px; line-height:1.5;">
+          <div style="background:#0f172a; border:1px solid #00f0ff; border-radius:6px; padding:12px; margin-bottom:14px; text-align:center;">
+            <div style="font-size:24px; margin-bottom:4px;">🛡️ SOVEREIGN DEFENDER</div>
+            <div style="font-size:14px; font-weight:bold; color:#00ff9d;">FINAL SCORE: <span id="final-score-display">0</span> PTS</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">All 5 shadow agent security boundaries verified.</div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:12px;">
+            <div>
+              <label style="display:block; font-size:11px; color:#38bdf8; margin-bottom:3px; font-weight:bold;">RECIPIENT NAME (FOR CERTIFICATE):</label>
+              <input type="text" id="player-name" placeholder="e.g., Alex Chen" style="width:100%; box-sizing:border-box; background:#060913; border:1px solid #334155; color:#f8fafc; padding:8px 10px; border-radius:4px; font-family:'Inter', sans-serif; font-size:12px;" />
+            </div>
+            <div>
+              <label style="display:block; font-size:11px; color:#38bdf8; margin-bottom:3px; font-weight:bold;">DELIVERY EMAIL:</label>
+              <input type="email" id="player-email" placeholder="e.g., alex.chen@novasmart.internal" style="width:100%; box-sizing:border-box; background:#060913; border:1px solid #334155; color:#f8fafc; padding:8px 10px; border-radius:4px; font-family:'Inter', sans-serif; font-size:12px;" />
+            </div>
+          </div>
+
+          <div id="status-msg" style="min-height:22px; font-size:11px; margin-bottom:8px; color:#94a3b8;"></div>
+
+          <div id="cert-download-wrap" style="display:none; margin-bottom:12px; background:#062d1f; border:1px solid #00ff9d; padding:8px 12px; border-radius:4px; text-align:center;">
+            <a id="cert-download-link" href="#" download="Completion_Certificate.pdf" style="color:#00ff9d; font-weight:bold; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+              <span>📥</span><span>DOWNLOAD SIGNED CERTIFICATE (PDF)</span>
+            </a>
+          </div>
+
+          <div id="leaderboard-section" style="border-top:1px solid #334155; padding-top:10px; margin-top:8px;">
+            <div style="font-size:11px; font-weight:bold; color:#f1f5f9; margin-bottom:6px;">🏆 GLOBAL TOP AGENT DEFENDERS</div>
+            <ul id="leaderboard-list" style="list-style:none; padding:0; margin:0; font-family:'Fira Code', monospace; font-size:11px; color:#cbd5e1;"></ul>
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:space-between;">
+          <button class="flash-btn-mini" onclick="closeCertificatePopup()" style="color:#94a3b8;">✕ RETURN TO SIMULATION</button>
+          <button class="btn-action" id="submit-btn" onclick="submitScoreAndEmailCertificate()">SUBMIT SCORE &amp; GENERATE CERTIFICATE</button>
         </div>
       </div>
     </div>
@@ -4224,7 +4338,7 @@ class MarkdownStrategyAgent:
       document.getElementById('gameModal').classList.add('active');
     }
 
-    const CURRENT_APP_VERSION = 'v3.4';
+    const CURRENT_APP_VERSION = 'v3.5';
 
     function showUpdatesModal() {
       AudioEngine.click();
@@ -4249,11 +4363,25 @@ class MarkdownStrategyAgent:
             Review recent platform enhancements, interactive cloud simulators, and security mechanics added to Shadow Agent Protocol. Every release is paired with real-world mental models so core architectural concepts stay memorable.
           </p>
 
-          <!-- Update v3.4 -->
+          <!-- Update v3.5 -->
           <div class="update-card highlight">
             <div class="update-header">
-              <span style="color:#00ff9d;">v3.4 &bull; Completion Certificate PDF &amp; Email Integration</span>
+              <span style="color:#00ff9d;">v3.5 &bull; PDF Certificate Engine &amp; Resend Connector Fix</span>
               <span class="update-tag" style="background:rgba(0,255,157,0.15); color:#00ff9d; border-color:#00ff9d;">LATEST</span>
+            </div>
+            <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
+              Resolved score submission wiring and certificate delivery: fixed DOM script execution order in <code>index.html</code>, corrected backend <code>scoreRes is not defined</code> ReferenceError in <code>src/index.js</code> when Resend reports non-200 responses, decoupled LootLocker leaderboard calls from certificate creation, and introduced direct in-browser PDF download support alongside email dispatch.
+            </div>
+            <div class="update-analogy-box" style="margin-top:8px;">
+              💡 <em>Analogy: Like unjamming a diploma printer and printing two copies simultaneously &mdash; one handed directly into your hand and another dispatched via courier to your inbox, so a hiccup at the post office never leaves you empty-handed.</em>
+            </div>
+          </div>
+
+          <!-- Update v3.4 -->
+          <div class="update-card">
+            <div class="update-header">
+              <span style="color:#00ff9d;">v3.4 &bull; Completion Certificate PDF &amp; Email Integration</span>
+              <span class="update-tag" style="background:rgba(0,255,157,0.15); color:#00ff9d; border-color:#00ff9d;">v3.4</span>
             </div>
             <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
               Connected the campaign victory modal directly to the cryptographic Certificate of Completion PDF engine (PR #2 by GitHub Copilot). Interns who successfully complete the M0&ndash;M5 defense protocol can now generate, customize, and email their official NovaSmart Incident Response Specialist credential right from the debriefing screen.

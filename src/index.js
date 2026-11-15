@@ -104,6 +104,13 @@ export default {
       try {
         const { playerName, email, score } = await request.json();
 
+        if (!playerName || !email) {
+          return new Response(JSON.stringify({ error: 'Player name and email are required.' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
         const pdfDoc = await PDFDocument.create();
         const page = pdfDoc.addPage([600, 400]);
         const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -115,31 +122,45 @@ export default {
 
         const pdfBase64 = await pdfDoc.saveAsBase64();
 
-        const emailRes = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${env.RESEND_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: 'Game Awards <onboarding@resend.dev>',
-            to: [email],
-            subject: 'Your Game Completion Certificate!',
-            html: `<p>Congrats <strong>${playerName}</strong>! Your official certificate is attached.</p>`,
-            attachments: [{ filename: 'Completion_Certificate.pdf', content: pdfBase64 }],
-          }),
-        });
+        let emailSent = false;
+        let emailError = null;
 
-        if (!emailRes.ok) {
-          const errText = await emailRes.text();
-          return new Response(JSON.stringify({ success: true, scoreStep: { status: scoreRes.status, body: scoreData } }), {
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+        if (env.RESEND_API_KEY) {
+          try {
+            const emailRes = await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${env.RESEND_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                from: 'Game Awards <onboarding@resend.dev>',
+                to: [email],
+                subject: 'Your Game Completion Certificate!',
+                html: `<p>Congrats <strong>${playerName}</strong>! Your official certificate is attached.</p>`,
+                attachments: [{ filename: 'Completion_Certificate.pdf', content: pdfBase64 }],
+              }),
+            });
 
+            if (emailRes.ok) {
+              emailSent = true;
+            } else {
+              emailError = await emailRes.text();
+            }
+          } catch (e) {
+            emailError = e.message;
+          }
+        } else {
+          emailError = 'RESEND_API_KEY is not configured on the worker environment.';
         }
 
-        return new Response(JSON.stringify({ success: true }), {
+        return new Response(JSON.stringify({
+          success: true,
+          emailSent,
+          emailError,
+          pdfBase64,
+        }), {
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (err) {
