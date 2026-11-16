@@ -39,7 +39,7 @@ export default {
     if (url.pathname === '/api/lootlocker/submit' && request.method === 'POST') {
       try {
         const { playerName, score, sessionToken } = await request.json();
-        const leaderboardKey = env.LEADERBOARD_KEY || 'main_leaderboard';
+        const leaderboardKey = env.LEADERBOARD_KEY || 'leaderboard';
 
         // Step 1: Set player name
         const nameRes = await fetch('https://api.lootlocker.io/game/player/name', {
@@ -82,9 +82,9 @@ export default {
     if (url.pathname === '/api/lootlocker/leaderboard' && request.method === 'GET') {
       try {
         const sessionToken = request.headers.get('x-session-token');
-        const leaderboardKey = env.LEADERBOARD_KEY || 'main_leaderboard';
-        const res = await fetch(`https://api.lootlocker.com/game/leaderboards/${leaderboardKey}/list?count=5`, {
-          headers: { 'x-session-token': sessionToken },
+        const leaderboardKey = env.LEADERBOARD_KEY || 'leaderboard';
+        const res = await fetch(`https://api.lootlocker.com/game/leaderboards/${leaderboardKey}/list?count=10`, {
+          headers: sessionToken ? { 'x-session-token': sessionToken } : {},
         });
         const data = await res.text();
         return new Response(data, {
@@ -104,8 +104,8 @@ export default {
       try {
         const { playerName, email, score } = await request.json();
 
-        if (!playerName || !email) {
-          return new Response(JSON.stringify({ error: 'Player name and email are required.' }), {
+        if (!playerName) {
+          return new Response(JSON.stringify({ error: 'Player name is required.' }), {
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
@@ -125,7 +125,7 @@ export default {
         let emailSent = false;
         let emailError = null;
 
-        if (env.RESEND_API_KEY) {
+        if (email && env.RESEND_API_KEY) {
           try {
             const emailRes = await fetch('https://api.resend.com/emails', {
               method: 'POST',
@@ -150,7 +150,7 @@ export default {
           } catch (e) {
             emailError = e.message;
           }
-        } else {
+        } else if (email && !env.RESEND_API_KEY) {
           emailError = 'RESEND_API_KEY is not configured on the worker environment.';
         }
 

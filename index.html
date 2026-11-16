@@ -1634,6 +1634,7 @@
       overlay.classList.add('active');
       overlay.style.display = 'flex';
     }
+    loadTopScores();
   }
 
   function closeCertificatePopup() {
@@ -1655,24 +1656,26 @@
     const playerName = playerNameInput ? playerNameInput.value.trim() : '';
     const email = emailInput ? emailInput.value.trim() : '';
 
-    if (!playerName || !email) {
+    if (!playerName) {
       if (statusMsg) {
         statusMsg.style.color = '#f87171';
-        statusMsg.textContent = '⚠️ Please enter both your name and email address.';
+        statusMsg.textContent = '⚠️ Please enter your name to upload your score to the leaderboard.';
       }
       return;
     }
 
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.innerText = 'PROCESSING...';
+      submitBtn.innerText = 'UPLOADING TO LEADERBOARD...';
     }
     if (statusMsg) {
       statusMsg.style.color = '#38bdf8';
-      statusMsg.textContent = '⏳ Submitting score and generating PDF certificate...';
+      statusMsg.textContent = '⏳ Registering player session & submitting score to LootLocker...';
     }
 
-    // Step A: Attempt LootLocker Leaderboard Submission (non-fatal if it fails)
+    // Step A: Submit to LootLocker Leaderboard
+    let lootLockerSuccess = false;
+    let playerRank = null;
     try {
       if (!sessionToken) {
         const authRes = await fetch(`${WORKER_BASE}/api/lootlocker/session`, {
@@ -1686,19 +1689,32 @@
       }
 
       if (sessionToken) {
-        await fetch(`${WORKER_BASE}/api/lootlocker/submit`, {
+        const submitRes = await fetch(`${WORKER_BASE}/api/lootlocker/submit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ playerName, score: currentFinalScore, sessionToken })
         });
-        loadTopScores();
+        if (submitRes.ok) {
+          const submitData = await submitRes.json();
+          lootLockerSuccess = true;
+          try {
+            const parsedScore = typeof submitData.scoreStep?.body === 'string'
+              ? JSON.parse(submitData.scoreStep.body)
+              : submitData.scoreStep?.body;
+            if (parsedScore && parsedScore.rank) {
+              playerRank = parsedScore.rank;
+            }
+          } catch(e) {}
+          await loadTopScores();
+        }
       }
     } catch (llErr) {
-      console.warn('LootLocker leaderboard submission non-fatal notice:', llErr);
+      console.warn('LootLocker submission notice:', llErr);
     }
 
-    // Step B: Generate PDF certificate and send via Resend
+    // Step B: Generate PDF certificate (and optionally email via Resend)
     try {
+      if (submitBtn) submitBtn.innerText = 'GENERATING CERTIFICATE...';
       const certRes = await fetch(`${WORKER_BASE}/api/generate-certificate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1708,32 +1724,46 @@
       const certData = await certRes.json();
 
       if (certRes.ok && certData.success) {
-        // Direct browser download option if PDF base64 is available
         if (certData.pdfBase64 && downloadWrap && downloadLink) {
           downloadLink.href = 'data:application/pdf;base64,' + certData.pdfBase64;
           downloadWrap.style.display = 'block';
         }
 
-        if (certData.emailSent) {
-          statusMsg.style.color = '#00ff9d';
-          statusMsg.innerHTML = '✓ Score recorded &amp; official certificate emailed to <strong>' + email + '</strong>!';
-        } else {
-          statusMsg.style.color = '#fde047';
-          statusMsg.innerHTML = '✓ Certificate generated! You can download it directly below. (Email status: ' + (certData.emailError || 'Pending dispatch') + ')';
+        let msg = '';
+        if (lootLockerSuccess) {
+          msg += `✓ <strong>${playerName}</strong> uploaded to LootLocker Leaderboard${playerRank ? ` (Rank #${playerRank})` : ''}! `;
         }
+        if (certData.emailSent) {
+          msg += `Official certificate dispatched to <strong>${email}</strong>!`;
+          statusMsg.style.color = '#00ff9d';
+        } else if (email) {
+          msg += `Certificate ready below (Email note: ${certData.emailError || 'queued'}).`;
+          statusMsg.style.color = '#fde047';
+        } else {
+          msg += `Certificate PDF generated & ready for direct download below!`;
+          statusMsg.style.color = '#00ff9d';
+        }
+        statusMsg.innerHTML = msg;
       } else {
-        throw new Error(certData.error || 'Failed to generate certificate.');
+        if (lootLockerSuccess) {
+          statusMsg.style.color = '#00ff9d';
+          statusMsg.innerHTML = `✓ <strong>${playerName}</strong> uploaded to LootLocker Leaderboard${playerRank ? ` (Rank #${playerRank})` : ''}!`;
+        } else {
+          throw new Error(certData.error || 'Failed to submit score.');
+        }
       }
     } catch (certErr) {
-      console.error('Certificate generation error:', certErr);
-      if (statusMsg) {
+      if (lootLockerSuccess) {
+        statusMsg.style.color = '#00ff9d';
+        statusMsg.innerHTML = `✓ <strong>${playerName}</strong> uploaded to LootLocker Leaderboard${playerRank ? ` (Rank #${playerRank})` : ''}!`;
+      } else {
         statusMsg.style.color = '#f87171';
-        statusMsg.textContent = '⚠️ Could not generate certificate: ' + certErr.message;
+        statusMsg.textContent = '⚠️ ' + certErr.message;
       }
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.innerText = 'SUBMIT SCORE & GENERATE CERTIFICATE';
+        submitBtn.innerText = 'UPLOAD TO LEADERBOARD & GET CERTIFICATE';
       }
     }
   }
@@ -1747,12 +1777,57 @@
       const list = document.getElementById('leaderboard-list');
       if (list && data && Array.isArray(data.items)) {
         list.innerHTML = data.items.map(
-          (entry) => `<li style="padding:2px 0;">#${entry.rank} &bull; ${entry.player ? (entry.player.name || 'Anonymous') : 'Agent'} &mdash; <span style="color:#00ff9d;">${entry.score} pts</span></li>`
+          (entry) => `<li style="padding:3px 0; display:flex; justify-content:space-between; border-bottom:1px solid #1e293b;">
+            <span><strong style="color:#ffd700;">#${entry.rank}</strong> &bull; ${entry.player ? (entry.player.name || 'Anonymous') : 'Agent'}</span>
+            <span style="color:#00ff9d; font-weight:bold;">${entry.score.toLocaleString()} pts</span>
+          </li>`
         ).join('');
       }
     } catch (e) {
       console.warn('Leaderboard fetch non-fatal notice:', e);
     }
+  }
+
+  function showLeaderboardModal() {
+    AudioEngine.click();
+    const modal = document.getElementById('gameModal');
+    document.getElementById('modalTitle').innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span>🏆</span>
+        <span>GLOBAL AGENT LEADERBOARD // TOP DEFENDERS</span>
+      </div>
+    `;
+    document.getElementById('modalBody').innerHTML = `
+      <div style="font-size:12px; line-height:1.6; color:#cbd5e1;">
+        <p style="margin-bottom:12px; color:#94a3b8;">
+          Live rankings pulled directly from the NovaSmart LootLocker backend. Complete the 5 incident response modules to register your name and final score.
+        </p>
+        <div id="modal-leaderboard-wrap" style="background:#060913; border:1px solid #334155; border-radius:6px; padding:12px;">
+          <div style="color:#38bdf8; font-family:'Fira Code', monospace; font-size:11px; margin-bottom:8px;">Fetching latest scores from LootLocker...</div>
+        </div>
+      </div>
+    `;
+    document.getElementById('modalFooter').innerHTML = `
+      <button class="flash-btn-mini" onclick="closeModal()" style="padding:6px 16px; background:#1a73e8; color:#fff; border:none; font-weight:bold; cursor:pointer;">CLOSE</button>
+    `;
+    modal.classList.add('active');
+
+    fetch(`${WORKER_BASE}/api/lootlocker/leaderboard`, {
+      headers: sessionToken ? { 'x-session-token': sessionToken } : {}
+    }).then(res => res.json()).then(data => {
+      const wrap = document.getElementById('modal-leaderboard-wrap');
+      if (wrap && data && Array.isArray(data.items)) {
+        wrap.innerHTML = data.items.map(
+          (entry) => `<div style="display:flex; justify-content:space-between; padding:6px 8px; border-bottom:1px solid #1e293b; font-family:'Fira Code', monospace; font-size:12px;">
+            <span><strong style="color:#ffd700;">#${entry.rank}</strong> &bull; ${entry.player ? (entry.player.name || 'Anonymous') : 'Agent'}</span>
+            <span style="color:#00ff9d; font-weight:bold;">${entry.score.toLocaleString()} pts</span>
+          </div>`
+        ).join('') || '<div style="color:#94a3b8;">No scores registered yet.</div>';
+      }
+    }).catch(err => {
+      const wrap = document.getElementById('modal-leaderboard-wrap');
+      if (wrap) wrap.innerHTML = '<div style="color:#f87171;">Unable to load leaderboard.</div>';
+    });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -1789,6 +1864,9 @@
         <button class="flash-btn-mini" id="btnToggleScanlines" onclick="toggleCRT()">📺 CRT: ON</button>
         <button class="flash-btn-mini" onclick="confirmResetSimulation()" style="color:#f87171;">🔄 RESET SIM</button>
         <button class="flash-btn-mini" onclick="showHelpModal()">❓ MANUAL</button>
+        <button class="flash-btn-mini" onclick="showLeaderboardModal()" style="color:#ffd700; display:flex; align-items:center;">
+          <span>🏆 LEADERBOARD</span>
+        </button>
         <button class="flash-btn-mini" id="btnUpdates" onclick="showUpdatesModal()" style="color:#38bdf8; display:flex; align-items:center;">
           <span>📢 UPDATES</span>
           <span id="badgeNewUpdates" style="background:#00ff9d; color:#060913; border-radius:10px; padding:1px 5px; font-size:8px; font-weight:bold; margin-left:4px; animation:updateGlow 1.5s infinite alternate;">NEW</span>
@@ -2007,7 +2085,7 @@
         <div class="modal-header">
           <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
             <span>🎓</span>
-            <span>NOVASMART PROTOCOL // CERTIFICATE OF COMPLETION</span>
+            <span>NOVASMART PROTOCOL // LEADERBOARD &amp; CERTIFICATE</span>
           </div>
           <button class="flash-btn-mini" onclick="closeCertificatePopup()">✕</button>
         </div>
@@ -2015,16 +2093,16 @@
           <div style="background:#0f172a; border:1px solid #00f0ff; border-radius:6px; padding:12px; margin-bottom:14px; text-align:center;">
             <div style="font-size:24px; margin-bottom:4px;">🛡️ SOVEREIGN DEFENDER</div>
             <div style="font-size:14px; font-weight:bold; color:#00ff9d;">FINAL SCORE: <span id="final-score-display">0</span> PTS</div>
-            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">All 5 shadow agent security boundaries verified.</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:4px;">All 5 shadow agent security boundaries verified. Upload your name to the LootLocker global leaderboard!</div>
           </div>
 
           <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:12px;">
             <div>
-              <label style="display:block; font-size:11px; color:#38bdf8; margin-bottom:3px; font-weight:bold;">RECIPIENT NAME (FOR CERTIFICATE):</label>
+              <label style="display:block; font-size:11px; color:#38bdf8; margin-bottom:3px; font-weight:bold;">PLAYER NAME (REQUIRED FOR LEADERBOARD &amp; CERTIFICATE):</label>
               <input type="text" id="player-name" placeholder="e.g., Alex Chen" style="width:100%; box-sizing:border-box; background:#060913; border:1px solid #334155; color:#f8fafc; padding:8px 10px; border-radius:4px; font-family:'Inter', sans-serif; font-size:12px;" />
             </div>
             <div>
-              <label style="display:block; font-size:11px; color:#38bdf8; margin-bottom:3px; font-weight:bold;">DELIVERY EMAIL:</label>
+              <label style="display:block; font-size:11px; color:#38bdf8; margin-bottom:3px; font-weight:bold;">DELIVERY EMAIL (OPTIONAL &mdash; FOR CERTIFICATE DISPATCH):</label>
               <input type="email" id="player-email" placeholder="e.g., alex.chen@novasmart.internal" style="width:100%; box-sizing:border-box; background:#060913; border:1px solid #334155; color:#f8fafc; padding:8px 10px; border-radius:4px; font-family:'Inter', sans-serif; font-size:12px;" />
             </div>
           </div>
@@ -2038,13 +2116,16 @@
           </div>
 
           <div id="leaderboard-section" style="border-top:1px solid #334155; padding-top:10px; margin-top:8px;">
-            <div style="font-size:11px; font-weight:bold; color:#f1f5f9; margin-bottom:6px;">🏆 GLOBAL TOP AGENT DEFENDERS</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:11px; font-weight:bold; color:#f1f5f9;">🏆 GLOBAL LOOTLOCKER LEADERBOARD</span>
+              <button class="flash-btn-mini" onclick="loadTopScores()" style="font-size:9px; padding:2px 6px;">🔄 REFRESH</button>
+            </div>
             <ul id="leaderboard-list" style="list-style:none; padding:0; margin:0; font-family:'Fira Code', monospace; font-size:11px; color:#cbd5e1;"></ul>
           </div>
         </div>
         <div class="modal-footer" style="display:flex; justify-content:space-between;">
           <button class="flash-btn-mini" onclick="closeCertificatePopup()" style="color:#94a3b8;">✕ RETURN TO SIMULATION</button>
-          <button class="btn-action" id="submit-btn" onclick="submitScoreAndEmailCertificate()">SUBMIT SCORE &amp; GENERATE CERTIFICATE</button>
+          <button class="btn-action" id="submit-btn" onclick="submitScoreAndEmailCertificate()">UPLOAD TO LEADERBOARD &amp; GET CERTIFICATE</button>
         </div>
       </div>
     </div>
@@ -4338,7 +4419,7 @@ class MarkdownStrategyAgent:
       document.getElementById('gameModal').classList.add('active');
     }
 
-    const CURRENT_APP_VERSION = 'v3.6';
+    const CURRENT_APP_VERSION = 'v3.7';
 
     function showUpdatesModal() {
       AudioEngine.click();
@@ -4363,11 +4444,25 @@ class MarkdownStrategyAgent:
             Review recent platform enhancements, interactive cloud simulators, and security mechanics added to Shadow Agent Protocol. Every release is paired with real-world mental models so core architectural concepts stay memorable.
           </p>
 
-          <!-- Update v3.6 -->
+          <!-- Update v3.7 -->
           <div class="update-card highlight">
             <div class="update-header">
-              <span style="color:#00ff9d;">v3.6 &bull; Cloudflare CI/CD Pipeline &amp; Wrangler Previews Fix</span>
+              <span style="color:#00ff9d;">v3.7 &bull; Live LootLocker Leaderboard &amp; Streamlined Submission</span>
               <span class="update-tag" style="background:rgba(0,255,157,0.15); color:#00ff9d; border-color:#00ff9d;">LATEST</span>
+            </div>
+            <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
+              Fully aligned LootLocker leaderboard reporting: decoupled email requirements so players can upload their name and score directly to the global leaderboard without mandatory email input, added real-time rank feedback upon submission, added a permanent <strong>🏆 LEADERBOARD</strong> button in the game titlebar, and ensured the leaderboard pre-loads immediately upon victory.
+            </div>
+            <div class="update-analogy-box" style="margin-top:8px;">
+              💡 <em>Analogy: Like an arcade machine high-score screen &mdash; you only need to punch in your initials to lock in your spot on the hall of fame marquee, with email purely optional if you want a commemorative certificate mailed home.</em>
+            </div>
+          </div>
+
+          <!-- Update v3.6 -->
+          <div class="update-card">
+            <div class="update-header">
+              <span style="color:#00ff9d;">v3.6 &bull; Cloudflare CI/CD Pipeline &amp; Wrangler Previews Fix</span>
+              <span class="update-tag" style="background:rgba(0,255,157,0.15); color:#00ff9d; border-color:#00ff9d;">v3.6</span>
             </div>
             <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
               Configured the <code>previews</code> block in <code>wrangler.jsonc</code> required by Wrangler 4.x / Cloudflare automated build pipelines running <code>npx wrangler preview</code>. Ensures seamless CI/CD preview deployments and branch environments.
@@ -4570,11 +4665,14 @@ class MarkdownStrategyAgent:
             FINAL GUARDIAN SCORE: ${GameState.score} PTS<br>
             SECURITY BADGE: PLATINUM SOVEREIGN
           </div>
+          <div style="margin-top:14px; font-size:12px; color:#38bdf8; background:#060913; border:1px solid #334155; padding:8px; border-radius:4px;">
+            ⭐ Ready to claim your spot? Click <strong>Upload to Leaderboard &amp; Get Certificate</strong> below to register your name and final score on the global LootLocker leaderboard!
+          </div>
         </div>
       `;
       document.getElementById('modalFooter').innerHTML = `
-        <button class="btn-action" onclick="openCertificatePopup()">EMAIL PDF CERTIFICATE</button>
-        <button class="btn-action btn-success" onclick="confirmResetSimulation()">REPLAY SIMULATION</button>
+        <button class="btn-action btn-success" onclick="openCertificatePopup()">🏆 UPLOAD TO LEADERBOARD &amp; GET CERTIFICATE</button>
+        <button class="btn-action" onclick="confirmResetSimulation()">REPLAY SIMULATION</button>
       `;
       modal.classList.add('active');
     }
