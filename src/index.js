@@ -81,7 +81,25 @@ export default {
     // --- LootLocker: get leaderboard ---
     if (url.pathname === '/api/lootlocker/leaderboard' && request.method === 'GET') {
       try {
-        const sessionToken = request.headers.get('x-session-token');
+        let sessionToken = request.headers.get('x-session-token');
+
+        // If client did not provide session token, automatically provision guest token
+        if (!sessionToken && env.LOOTLOCKER_API_KEY) {
+          try {
+            const guestRes = await fetch('https://api.lootlocker.com/game/v2/session/guest', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ game_key: env.LOOTLOCKER_API_KEY, game_version: '1.0.0' }),
+            });
+            if (guestRes.ok) {
+              const guestData = await guestRes.json();
+              sessionToken = guestData.session_token;
+            }
+          } catch (tokenErr) {
+            console.warn('Auto guest session notice:', tokenErr.message);
+          }
+        }
+
         const leaderboardKey = env.LEADERBOARD_KEY || 'leaderboard';
         const res = await fetch(`https://api.lootlocker.com/game/leaderboards/${leaderboardKey}/list?count=10`, {
           headers: sessionToken ? { 'x-session-token': sessionToken } : {},
