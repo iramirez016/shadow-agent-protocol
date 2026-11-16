@@ -4338,7 +4338,7 @@ class MarkdownStrategyAgent:
       document.getElementById('gameModal').classList.add('active');
     }
 
-    const CURRENT_APP_VERSION = 'v3.5';
+    const CURRENT_APP_VERSION = 'v3.6';
 
     function showUpdatesModal() {
       AudioEngine.click();
@@ -4363,11 +4363,25 @@ class MarkdownStrategyAgent:
             Review recent platform enhancements, interactive cloud simulators, and security mechanics added to Shadow Agent Protocol. Every release is paired with real-world mental models so core architectural concepts stay memorable.
           </p>
 
-          <!-- Update v3.5 -->
+          <!-- Update v3.6 -->
           <div class="update-card highlight">
             <div class="update-header">
-              <span style="color:#00ff9d;">v3.5 &bull; PDF Certificate Engine &amp; Resend Connector Fix</span>
+              <span style="color:#00ff9d;">v3.6 &bull; Cloudflare CI/CD Pipeline &amp; Wrangler Previews Fix</span>
               <span class="update-tag" style="background:rgba(0,255,157,0.15); color:#00ff9d; border-color:#00ff9d;">LATEST</span>
+            </div>
+            <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
+              Configured the <code>previews</code> block in <code>wrangler.jsonc</code> required by Wrangler 4.x / Cloudflare automated build pipelines running <code>npx wrangler preview</code>. Ensures seamless CI/CD preview deployments and branch environments.
+            </div>
+            <div class="update-analogy-box" style="margin-top:8px;">
+              💡 <em>Analogy: Like issuing a security preview badge for staging rehearsals before the main concert gates open &mdash; giving the automated gatekeeper the exact protocol credentials it expects.</em>
+            </div>
+          </div>
+
+          <!-- Update v3.5 -->
+          <div class="update-card">
+            <div class="update-header">
+              <span style="color:#00ff9d;">v3.5 &bull; PDF Certificate Engine &amp; Resend Connector Fix</span>
+              <span class="update-tag" style="background:rgba(0,255,157,0.15); color:#00ff9d; border-color:#00ff9d;">v3.5</span>
             </div>
             <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
               Resolved score submission wiring and certificate delivery: fixed DOM script execution order in <code>index.html</code>, corrected backend <code>scoreRes is not defined</code> ReferenceError in <code>src/index.js</code> when Resend reports non-200 responses, decoupled LootLocker leaderboard calls from certificate creation, and introduced direct in-browser PDF download support alongside email dispatch.
