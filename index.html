@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google-client-id" content="643701041191-egcdurbar615dnlrk4crg5s27jh9aglq.apps.googleusercontent.com">
   <title>Shadow Agent Protocol: NovaSmart - IT Intern Onboarding Simulation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="https://accounts.google.com/gsi/client" defer onload="initializeGoogleIdentity()"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -132,6 +134,21 @@
       display: flex;
       gap: 6px;
       align-items: center;
+    }
+
+    #authProfileWidget { display: flex; align-items: center; gap: 6px; }
+    #authProfileButton { white-space: nowrap; color: #00f0ff; border-color: #0891b2; }
+    #authProfileAvatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; display: none; }
+    #authProfileLabel { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .auth-overlay { position: fixed; inset: 0; z-index: 500; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.78); padding: 16px; }
+    .auth-overlay.active { display: flex; }
+    .auth-card { width: min(420px, 95vw); background: #111827; border: 1px solid #00f0ff; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 0 30px rgba(0,240,255,.2); }
+    #googleSignInButton { display: flex; justify-content: center; min-height: 42px; margin: 18px 0; }
+    @media (max-width: 760px) {
+      #authProfileLabel { display: none; }
+      .flash-titlebar { padding: 0 6px; }
+      .flash-title-left > span:not(.flash-badge), .save-indicator { display: none; }
+      .flash-controls { gap: 3px; }
     }
 
     /* Primary View Mode Switcher (Flash vs Split vs Cloud Console) */
@@ -1622,13 +1639,159 @@
 
 <script>
   const WORKER_BASE = 'https://shadow-agent-protocol.iramirez-b6a.workers.dev';
+  const GOOGLE_CLIENT_ID = document.querySelector('meta[name="google-client-id"]')?.content.trim() || '';
+  const AUTH_PROFILE_KEY = 'NOVASMART_GOOGLE_PROFILE';
+  const AUTH_SESSION_KEY = 'NOVASMART_LOOTLOCKER_SESSION';
+  const AUTH_ID_TOKEN_KEY = 'NOVASMART_GOOGLE_ID_TOKEN';
   let currentFinalScore = 0;
   let sessionToken = null;
+  let authenticatedPlayer = null;
+  let googleIdToken = null;
+  let googleIdentityInitialized = false;
+  let googleButtonRendered = false;
+  let googleOneTapPrompted = false;
+
+  function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[character]);
+  }
+
+  function initializeGoogleIdentity() {
+    restoreAuthenticatedPlayer();
+    if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) return;
+    if (!googleIdentityInitialized) {
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
+      googleIdentityInitialized = true;
+    }
+    const buttonTarget = document.getElementById('googleSignInButton');
+    if (buttonTarget && !googleButtonRendered) {
+      google.accounts.id.renderButton(buttonTarget, {
+        theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'rectangular', width: 280,
+      });
+      googleButtonRendered = true;
+    }
+    if (!googleOneTapPrompted && (!authenticatedPlayer || !googleIdToken)) {
+      google.accounts.id.prompt();
+      googleOneTapPrompted = true;
+    }
+  }
+
+  function restoreAuthenticatedPlayer() {
+    try {
+      const savedProfile = localStorage.getItem(AUTH_PROFILE_KEY);
+      const savedSession = localStorage.getItem(AUTH_SESSION_KEY);
+      googleIdToken = sessionStorage.getItem(AUTH_ID_TOKEN_KEY);
+      if (savedProfile && savedSession) {
+        authenticatedPlayer = JSON.parse(savedProfile);
+        sessionToken = savedSession;
+        renderAuthProfile();
+      }
+    } catch (error) {
+      localStorage.removeItem(AUTH_PROFILE_KEY);
+      localStorage.removeItem(AUTH_SESSION_KEY);
+    }
+  }
+
+  async function handleGoogleCredential(response) {
+    const status = document.getElementById('auth-status');
+    if (status) status.textContent = 'Verifying Google account and restoring player profile…';
+    try {
+      const res = await fetch(`${WORKER_BASE}/api/auth/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: response.credential }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.authenticated || !data.sessionToken || !data.player?.email) {
+        throw new Error(data.error || 'Google sign-in could not be completed.');
+      }
+      authenticatedPlayer = data.player;
+      sessionToken = data.sessionToken;
+      googleIdToken = response.credential;
+      localStorage.setItem(AUTH_PROFILE_KEY, JSON.stringify(authenticatedPlayer));
+      localStorage.setItem(AUTH_SESSION_KEY, sessionToken);
+      sessionStorage.setItem(AUTH_ID_TOKEN_KEY, googleIdToken);
+      renderAuthProfile();
+      closeAuthModal();
+      const statusMsg = document.getElementById('auth-status');
+      if (statusMsg) statusMsg.textContent = '';
+    } catch (error) {
+      if (status) status.textContent = error.message;
+    }
+  }
+
+  function renderAuthProfile() {
+    const button = document.getElementById('authProfileButton');
+    const label = document.getElementById('authProfileLabel');
+    const avatar = document.getElementById('authProfileAvatar');
+    if (!button || !label || !avatar) return;
+    if (authenticatedPlayer) {
+      button.title = googleIdToken ? 'Verified Google account. Click to sign out.' : 'Sign in again to verify email delivery.';
+      label.textContent = `${authenticatedPlayer.name} · ✓ VERIFIED INTERN`;
+      avatar.src = authenticatedPlayer.picture || '';
+      avatar.style.display = authenticatedPlayer.picture ? 'block' : 'none';
+      button.setAttribute('aria-label', googleIdToken ? `Sign out ${authenticatedPlayer.name}` : `Reauthenticate ${authenticatedPlayer.name}`);
+    } else {
+      button.title = 'Sign in with Google';
+      label.textContent = '🔑 SIGN IN (GOOGLE)';
+      avatar.style.display = 'none';
+      button.setAttribute('aria-label', 'Sign in with Google');
+    }
+    updateWinIdentityFields();
+  }
+
+  function updateWinIdentityFields() {
+    const nameInput = document.getElementById('player-name');
+    const emailInput = document.getElementById('player-email');
+    const submitButton = document.getElementById('submit-btn');
+    if (!nameInput || !emailInput) return;
+    nameInput.readOnly = Boolean(authenticatedPlayer);
+    emailInput.readOnly = Boolean(authenticatedPlayer);
+    nameInput.value = authenticatedPlayer?.name || '';
+    emailInput.value = authenticatedPlayer?.email || '';
+    nameInput.style.borderColor = authenticatedPlayer ? '#00ff9d' : '#334155';
+    emailInput.style.borderColor = authenticatedPlayer ? '#00ff9d' : '#334155';
+    const nameLabel = nameInput.previousElementSibling;
+    const emailLabel = emailInput.previousElementSibling;
+    if (nameLabel) nameLabel.textContent = authenticatedPlayer ? 'VERIFIED PLAYER NAME:' : 'PLAYER NAME (REQUIRED FOR LEADERBOARD & CERTIFICATE):';
+    if (emailLabel) emailLabel.textContent = authenticatedPlayer ? 'VERIFIED GOOGLE EMAIL:' : 'DELIVERY EMAIL (OPTIONAL — FOR CERTIFICATE DISPATCH):';
+    if (submitButton) submitButton.textContent = authenticatedPlayer
+      ? 'SUBMIT VERIFIED SCORE & EMAIL CERTIFICATE'
+      : 'UPLOAD TO LEADERBOARD & GET CERTIFICATE';
+  }
+
+  function openAuthModal() {
+    if (authenticatedPlayer && googleIdToken) {
+      authenticatedPlayer = null;
+      sessionToken = null;
+      googleIdToken = null;
+      localStorage.removeItem(AUTH_PROFILE_KEY);
+      localStorage.removeItem(AUTH_SESSION_KEY);
+      sessionStorage.removeItem(AUTH_ID_TOKEN_KEY);
+      renderAuthProfile();
+      if (window.google?.accounts?.id) google.accounts.id.disableAutoSelect();
+      return;
+    }
+    const overlay = document.getElementById('auth-overlay');
+    const status = document.getElementById('auth-status');
+    if (status) status.textContent = GOOGLE_CLIENT_ID
+      ? (authenticatedPlayer ? 'Sign in again to verify your identity for certificate delivery.' : 'Sign in to sync your verified identity and persistent score.')
+      : 'Google sign-in is not configured yet. You can continue as a guest.';
+    overlay?.classList.add('active');
+    if (!GOOGLE_CLIENT_ID) return;
+    if (window.google?.accounts?.id) initializeGoogleIdentity();
+  }
+
+  function closeAuthModal() {
+    document.getElementById('auth-overlay')?.classList.remove('active');
+  }
 
   function onGameWin(score) {
     currentFinalScore = (typeof score === 'number') ? score : (window.GameState && GameState.score ? GameState.score : 0);
     const scoreDisp = document.getElementById('final-score-display');
     if (scoreDisp) scoreDisp.textContent = currentFinalScore;
+    updateWinIdentityFields();
     const overlay = document.getElementById('win-overlay');
     if (overlay) {
       overlay.classList.add('active');
@@ -1653,13 +1816,21 @@
     const downloadWrap = document.getElementById('cert-download-wrap');
     const downloadLink = document.getElementById('cert-download-link');
 
-    const playerName = playerNameInput ? playerNameInput.value.trim() : '';
-    const email = emailInput ? emailInput.value.trim() : '';
+    const playerName = authenticatedPlayer?.name || (playerNameInput ? playerNameInput.value.trim() : '');
+    const email = authenticatedPlayer?.email || (emailInput ? emailInput.value.trim() : '');
 
     if (!playerName) {
       if (statusMsg) {
         statusMsg.style.color = '#f87171';
         statusMsg.textContent = '⚠️ Please enter your name to upload your score to the leaderboard.';
+      }
+      return;
+    }
+
+    if (authenticatedPlayer && !googleIdToken) {
+      if (statusMsg) {
+        statusMsg.style.color = '#fde047';
+        statusMsg.textContent = 'Sign in again to verify your email for certificate delivery. Click your titlebar profile to continue.';
       }
       return;
     }
@@ -1718,7 +1889,12 @@
       const certRes = await fetch(`${WORKER_BASE}/api/generate-certificate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerName, email, score: currentFinalScore })
+        body: JSON.stringify({
+          playerName,
+          email,
+          score: currentFinalScore,
+          ...(authenticatedPlayer && googleIdToken ? { idToken: googleIdToken } : {}),
+        })
       });
 
       const certData = await certRes.json();
@@ -1731,10 +1907,10 @@
 
         let msg = '';
         if (lootLockerSuccess) {
-          msg += `✓ <strong>${playerName}</strong> uploaded to LootLocker Leaderboard${playerRank ? ` (Rank #${playerRank})` : ''}! `;
+          msg += `✓ <strong>${escapeHTML(playerName)}</strong> uploaded to LootLocker Leaderboard${playerRank ? ` (Rank #${playerRank})` : ''}! `;
         }
         if (certData.emailSent) {
-          msg += `Official certificate dispatched to <strong>${email}</strong>!`;
+          msg += `Official certificate dispatched to <strong>${escapeHTML(email)}</strong>!`;
           statusMsg.style.color = '#00ff9d';
         } else if (email) {
           msg += `Certificate ready below (Email note: ${certData.emailError || 'queued'}).`;
@@ -1745,9 +1921,14 @@
         }
         statusMsg.innerHTML = msg;
       } else {
+        if (certRes.status === 401) {
+          googleIdToken = null;
+          sessionStorage.removeItem(AUTH_ID_TOKEN_KEY);
+          renderAuthProfile();
+        }
         if (lootLockerSuccess) {
-          statusMsg.style.color = '#00ff9d';
-          statusMsg.innerHTML = `✓ <strong>${playerName}</strong> uploaded to LootLocker Leaderboard${playerRank ? ` (Rank #${playerRank})` : ''}!`;
+          statusMsg.style.color = '#fde047';
+          statusMsg.textContent = `Score uploaded to LootLocker${playerRank ? ` (Rank #${playerRank})` : ''}, but certificate delivery failed: ${certData.error || 'unknown error'}`;
         } else {
           throw new Error(certData.error || 'Failed to submit score.');
         }
@@ -1755,7 +1936,7 @@
     } catch (certErr) {
       if (lootLockerSuccess) {
         statusMsg.style.color = '#00ff9d';
-        statusMsg.innerHTML = `✓ <strong>${playerName}</strong> uploaded to LootLocker Leaderboard${playerRank ? ` (Rank #${playerRank})` : ''}!`;
+        statusMsg.innerHTML = `✓ <strong>${escapeHTML(playerName)}</strong> uploaded to LootLocker Leaderboard${playerRank ? ` (Rank #${playerRank})` : ''}!`;
       } else {
         statusMsg.style.color = '#f87171';
         statusMsg.textContent = '⚠️ ' + certErr.message;
@@ -1831,10 +2012,8 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('submit-btn');
-    if (btn) {
-      btn.addEventListener('click', submitScoreAndEmailCertificate);
-    }
+    initializeGoogleIdentity();
+    renderAuthProfile();
   });
 </script>
 
@@ -1853,6 +2032,12 @@
         <div class="save-indicator"><div class="save-dot"></div><span>💾 AUTOSAVE</span></div>
       </div>
       <div class="flash-controls">
+        <div id="authProfileWidget">
+          <img id="authProfileAvatar" alt="Verified player avatar">
+          <button class="flash-btn-mini" id="authProfileButton" onclick="openAuthModal()">
+            <span id="authProfileLabel">🔑 SIGN IN (GOOGLE)</span>
+          </button>
+        </div>
         <!-- View Mode Switcher: Flash HUD, Cloud Console, and Split -->
         <div class="view-mode-selector" title="Switch between Flash HUD, Cloud Console, and Split View">
           <button class="view-mode-btn" id="btnViewFlash" onclick="setViewMode('flash')">🕹️ Flash HUD</button>
@@ -1871,6 +2056,17 @@
           <span>📢 UPDATES</span>
           <span id="badgeNewUpdates" style="background:#00ff9d; color:#060913; border-radius:10px; padding:1px 5px; font-size:8px; font-weight:bold; margin-left:4px; animation:updateGlow 1.5s infinite alternate;">NEW</span>
         </button>
+      </div>
+    </div>
+
+    <div class="auth-overlay" id="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+      <div class="auth-card">
+        <div style="font-size:24px; margin-bottom:8px;">🔐</div>
+        <h2 id="auth-title" style="font:600 16px 'Space Grotesk',sans-serif; color:#00f0ff;">INTERN IDENTITY // GOOGLE SSO</h2>
+        <p style="font-size:12px; color:#cbd5e1; margin-top:8px;">Sign in to keep your verified profile and LootLocker score across visits. You can start or continue as a guest.</p>
+        <div id="googleSignInButton"></div>
+        <div id="auth-status" role="status" style="min-height:18px; font-size:11px; color:#94a3b8;"></div>
+        <button class="flash-btn-mini" onclick="closeAuthModal()" style="margin:14px auto 0;">CONTINUE AS GUEST</button>
       </div>
     </div>
 
@@ -4419,7 +4615,7 @@ class MarkdownStrategyAgent:
       document.getElementById('gameModal').classList.add('active');
     }
 
-    const CURRENT_APP_VERSION = 'v3.7';
+    const CURRENT_APP_VERSION = 'v3.8';
 
     function showUpdatesModal() {
       AudioEngine.click();
@@ -4443,6 +4639,17 @@ class MarkdownStrategyAgent:
           <p style="margin-bottom:12px; color:#94a3b8;">
             Review recent platform enhancements, interactive cloud simulators, and security mechanics added to Shadow Agent Protocol. Every release is paired with real-world mental models so core architectural concepts stay memorable.
           </p>
+
+          <!-- Update v3.8 -->
+          <div class="update-card highlight">
+            <div class="update-header">
+              <span style="color:#00ff9d;">v3.8 &bull; 1-Click Google OAuth &amp; Persistent Player Identity</span>
+              <span class="update-tag" style="background:rgba(0,255,157,0.15); color:#00ff9d; border-color:#00ff9d;">LATEST</span>
+            </div>
+            <div style="font-size:12px; color:#e2e8f0; margin-top:2px;">
+              Added optional Google One Tap sign-in and verified profile binding to a persistent LootLocker player. Sign in from the titlebar to save your leaderboard identity and prefill your verified name and email at graduation; guest play remains available.
+            </div>
+          </div>
 
           <!-- Update v3.7 -->
           <div class="update-card highlight">

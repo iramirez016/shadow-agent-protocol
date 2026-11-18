@@ -6,6 +6,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, x-session-token',
 };
 
+async function verifyGoogleIdToken(idToken, clientId) {
+  if (!clientId || typeof idToken !== 'string' || !idToken) return null;
+  const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
+  if (!response.ok) return null;
+  const profile = await response.json();
+  if (profile.aud !== clientId || profile.email_verified !== 'true' || !profile.sub || !profile.email) return null;
+  return profile;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -14,13 +23,136 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    // --- LootLocker: start guest session ---
-    if (url.pathname === '/api/lootlocker/session' && request.method === 'POST') {
+    // --- Google OAuth: verify ID token and provision a persistent player ---
+    if (url.pathname === '/api/auth/verify' && request.method === 'POST') {
       try {
-        const res = await fetch('https://api.lootlocker.com/game/v2/session/guest', {
+        let body;
+        try {
+          body = await request.json();
+        } catch {
+          return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const { idToken } = body || {};
+        if (!idToken || typeof idToken !== 'string') {
+          return new Response(JSON.stringify({ error: 'Missing idToken' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        if (!env.GOOGLE_CLIENT_ID) {
+          return new Response(JSON.stringify({ error: 'Google sign-in is not configured.' }), {
+            status: 503,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        if (!env.LOOTLOCKER_API_KEY) {
+          return new Response(JSON.stringify({ error: 'LootLocker is not configured.' }), {
+            status: 503,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const profile = await verifyGoogleIdToken(idToken, env.GOOGLE_CLIENT_ID);
+        if (!profile) {
+          return new Response(JSON.stringify({ error: 'Google identity or email could not be verified.' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const playerName = typeof profile.name === 'string' && profile.name.trim()
+          ? profile.name.trim()
+          : profile.email;
+        const lootLockerRes = await fetch('https://api.lootlocker.com/game/v2/session/custom', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ game_key: env.LOOTLOCKER_API_KEY, game_version: '1.0.0' }),
+          body: JSON.stringify({
+            game_key: env.LOOTLOCKER_API_KEY,
+            game_version: '1.0.0',
+            player_identifier: `g_${profile.sub}`,
+          }),
+        });
+        const lootLockerData = await lootLockerRes.json();
+        if (!lootLockerRes.ok || !lootLockerData.session_token) {
+          return new Response(JSON.stringify({ error: 'Unable to create a persistent LootLocker session.' }), {
+            status: 502,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Display-name synchronization is best effort; identity/session creation is authoritative.
+        try {
+          await fetch('https://api.lootlocker.io/game/player/name', {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-session-token': lootLockerData.session_token,
+              'LL-Version': '2021-03-01',
+            },
+            body: JSON.stringify({ name: playerName }),
+          });
+        } catch (nameError) {
+          console.warn('LootLocker player-name sync notice:', nameError.message);
+        }
+
+        return new Response(JSON.stringify({
+          authenticated: true,
+          player: { sub: profile.sub, email: profile.email, name: playerName, picture: profile.picture || '' },
+          sessionToken: lootLockerData.session_token,
+          playerId: lootLockerData.player_id,
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message || 'Google sign-in failed.' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // --- LootLocker: start a custom persistent session or an anonymous guest session ---
+    if (url.pathname === '/api/lootlocker/session' && request.method === 'POST') {
+      try {
+        let body = {};
+        try {
+          const parsedBody = await request.json();
+          if (parsedBody && typeof parsedBody === 'object' && !Array.isArray(parsedBody)) body = parsedBody;
+        } catch {
+          // An empty body remains valid for existing guest clients.
+        }
+        const requestedIdentifier = typeof body.player_identifier === 'string' ? body.player_identifier.trim() : '';
+        let playerIdentifier = '';
+        if (requestedIdentifier || body.idToken) {
+          const profile = await verifyGoogleIdToken(body.idToken, env.GOOGLE_CLIENT_ID);
+          if (!profile) {
+            return new Response(JSON.stringify({ error: 'A verified Google identity is required for a custom session.' }), {
+              status: 401,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+          playerIdentifier = `g_${profile.sub}`;
+          if (requestedIdentifier && requestedIdentifier !== playerIdentifier) {
+            return new Response(JSON.stringify({ error: 'Custom player identifier does not match the verified Google identity.' }), {
+              status: 403,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
+        const isCustomSession = Boolean(playerIdentifier);
+        const res = await fetch(`https://api.lootlocker.com/game/v2/session/${isCustomSession ? 'custom' : 'guest'}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            game_key: env.LOOTLOCKER_API_KEY,
+            game_version: '1.0.0',
+            ...(isCustomSession ? { player_identifier: playerIdentifier } : {}),
+          }),
         });
         const data = await res.text();
         return new Response(data, {
@@ -39,6 +171,12 @@ export default {
     if (url.pathname === '/api/lootlocker/submit' && request.method === 'POST') {
       try {
         const { playerName, score, sessionToken } = await request.json();
+        if (!sessionToken) {
+          return new Response(JSON.stringify({ error: 'A LootLocker session is required.' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
         const leaderboardKey = env.LEADERBOARD_KEY || 'leaderboard';
 
         // Step 1: Set player name
@@ -120,7 +258,31 @@ export default {
     // --- Generate PDF certificate + email via Resend ---
     if (url.pathname === '/api/generate-certificate' && request.method === 'POST') {
       try {
-        const { playerName, email, score } = await request.json();
+        let certificateRequest;
+        try {
+          certificateRequest = await request.json();
+        } catch {
+          return new Response(JSON.stringify({ error: 'Invalid JSON body.' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        const { playerName: requestedName, email: requestedEmail, score, idToken } = certificateRequest || {};
+        let playerName = requestedName;
+        let email = requestedEmail;
+
+        // When a signed-in player requests email delivery, derive recipient details from a fresh Google token.
+        if (idToken) {
+          const profile = await verifyGoogleIdToken(idToken, env.GOOGLE_CLIENT_ID);
+          if (!profile) {
+            return new Response(JSON.stringify({ error: 'Google sign-in expired or could not be verified. Sign in again to email your certificate.' }), {
+              status: 401,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+          playerName = typeof profile.name === 'string' && profile.name.trim() ? profile.name.trim() : profile.email;
+          email = profile.email;
+        }
 
         if (!playerName) {
           return new Response(JSON.stringify({ error: 'Player name is required.' }), {
