@@ -1,6 +1,6 @@
 # Implementation Plan: OAuth / SSO Authentication & Persistent Identity
 
-Transition the **Shadow Agent Protocol** from ephemeral anonymous guest sessions to a **unified 1-Click OAuth / SSO authentication flow** (Google One Tap & OAuth 2.0 / GitHub SSO), automatically binding persistent user profiles to LootLocker custom sessions and certificate delivery.
+Transition the **Shadow Agent Protocol** from ephemeral anonymous guest sessions to a **unified 1-Click OAuth / SSO authentication flow** (Google One Tap & OAuth 2.0 / GitHub SSO), automatically binding persistent user profiles to LootLocker Google sessions and certificate delivery.
 
 ---
 
@@ -20,7 +20,7 @@ Transition the **Shadow Agent Protocol** from ephemeral anonymous guest sessions
 > Rather than a blocking login gate before Mission 0 (which causes bounce rates), we employ **Progressive Profiling**:
 > 1. Players can start Mission 0 immediately or sign in with 1 click via the retro titlebar.
 > 2. Signing in automatically extracts and verifies the player's Google profile (`name`, `email`, `picture`).
-> 3. LootLocker is initialized via `https://api.lootlocker.com/game/v2/session/custom` using the verified Google unique ID (`sub`) as `player_identifier`, ensuring persistent player identity across game replays, devices, and browser restarts.
+> 3. The Worker sends the verified Google ID token to `https://api.lootlocker.com/game/session/google` with `platform: "web"`. LootLocker must have Google sign-in enabled and the matching OAuth Web Client ID configured for that platform. LootLocker then supplies a persistent provider-backed player identity.
 
 ---
 
@@ -41,10 +41,10 @@ sequenceDiagram
     Client->>Google: Authenticates user credentials
     Google-->>Client: Returns signed JWT (Credential Response)
     
-    Note over Client, Worker: Server-Side Token Verification & Custom Session
+    Note over Client, Worker: Server-Side Token Verification & Persistent Google Session
     Client->>Worker: POST /api/auth/verify (credential JWT)
     Worker->>Google: Validates JWT signature & audience
-    Worker->>LootLocker: POST /game/v2/session/custom (player_identifier: google_sub)
+    Worker->>LootLocker: POST /game/session/google (id_token, platform: web)
     LootLocker-->>Worker: Returns persistent session_token & player_id
     Worker-->>Client: Returns { authenticated: true, player: { name, email, avatar }, sessionToken }
     
@@ -75,14 +75,14 @@ sequenceDiagram
 - **Add `/api/auth/verify` Endpoint**:
   - Accepts Google JWT credential token from client.
   - Validates token against Google's tokeninfo endpoint (`https://oauth2.googleapis.com/tokeninfo?id_token=...`).
-  - Provisions a persistent LootLocker session via LootLocker Custom Session (`https://api.lootlocker.com/game/v2/session/custom`) with `player_identifier = google_sub`.
+  - Provisions a persistent LootLocker Google session via `https://api.lootlocker.com/game/session/google` with the verified Google ID token and `platform = web`.
   - Sets player name automatically in LootLocker to the verified Google display name.
   - Returns authenticated user payload (`name`, `email`, `picture`, `session_token`, `player_id`).
-- **Support Custom Session in `/api/lootlocker/session`**:
-  - Accept optional `player_identifier` so authenticated users receive their unique LootLocker record, while anonymous users fallback to guest sessions.
+- **Support Persistent and Guest Sessions in `/api/lootlocker/session`**:
+  - Require a verified Google ID token for the persistent Google session; use LootLocker's guest endpoint for anonymous sessions.
 
 ```javascript
-// --- OAuth: Verify Google ID Token & Link LootLocker Custom Session ---
+// --- OAuth: Verify Google ID Token & Start LootLocker Google Session ---
 if (url.pathname === '/api/auth/verify' && request.method === 'POST') {
   try {
     const { idToken } = await request.json();
@@ -104,14 +104,15 @@ if (url.pathname === '/api/auth/verify' && request.method === 'POST') {
     const profile = await gRes.json();
     const { sub, email, name, picture } = profile;
 
-    // Start persistent LootLocker session linked to Google sub
-    const llRes = await fetch('https://api.lootlocker.com/game/v2/session/custom', {
+    // Start a persistent LootLocker Google-provider session.
+    const llRes = await fetch('https://api.lootlocker.com/game/session/google', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'LL-Version': '2021-03-01' },
       body: JSON.stringify({
         game_key: env.LOOTLOCKER_API_KEY,
+        id_token: idToken,
         game_version: '1.0.0',
-        player_identifier: `g_${sub}`
+        platform: 'web'
       })
     });
     const llData = await llRes.json();

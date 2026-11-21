@@ -1638,7 +1638,9 @@
 </head>
 
 <script>
-  const WORKER_BASE = 'https://shadow-agent-protocol.iramirez-b6a.workers.dev';
+  const WORKER_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ? window.location.origin
+    : 'https://shadow-agent-protocol.iramirez-b6a.workers.dev';
   const GOOGLE_CLIENT_ID = document.querySelector('meta[name="google-client-id"]')?.content.trim() || '';
   const AUTH_PROFILE_KEY = 'NOVASMART_GOOGLE_PROFILE';
   const AUTH_SESSION_KEY = 'NOVASMART_LOOTLOCKER_SESSION';
@@ -1727,11 +1729,11 @@
     const avatar = document.getElementById('authProfileAvatar');
     if (!button || !label || !avatar) return;
     if (authenticatedPlayer) {
-      button.title = googleIdToken ? 'Verified Google account. Click to sign out.' : 'Sign in again to verify email delivery.';
+      button.title = 'Verified Google account. Click to sign out.';
       label.textContent = `${authenticatedPlayer.name} · ✓ VERIFIED INTERN`;
       avatar.src = authenticatedPlayer.picture || '';
       avatar.style.display = authenticatedPlayer.picture ? 'block' : 'none';
-      button.setAttribute('aria-label', googleIdToken ? `Sign out ${authenticatedPlayer.name}` : `Reauthenticate ${authenticatedPlayer.name}`);
+      button.setAttribute('aria-label', `Sign out ${authenticatedPlayer.name}`);
     } else {
       button.title = 'Sign in with Google';
       label.textContent = '🔑 SIGN IN (GOOGLE)';
@@ -1762,7 +1764,7 @@
   }
 
   function openAuthModal() {
-    if (authenticatedPlayer && googleIdToken) {
+    if (authenticatedPlayer) {
       authenticatedPlayer = null;
       sessionToken = null;
       googleIdToken = null;
@@ -1776,7 +1778,7 @@
     const overlay = document.getElementById('auth-overlay');
     const status = document.getElementById('auth-status');
     if (status) status.textContent = GOOGLE_CLIENT_ID
-      ? (authenticatedPlayer ? 'Sign in again to verify your identity for certificate delivery.' : 'Sign in to sync your verified identity and persistent score.')
+      ? 'Sign in to sync your verified identity and persistent score.'
       : 'Google sign-in is not configured yet. You can continue as a guest.';
     overlay?.classList.add('active');
     if (!GOOGLE_CLIENT_ID) return;
@@ -1823,14 +1825,6 @@
       if (statusMsg) {
         statusMsg.style.color = '#f87171';
         statusMsg.textContent = '⚠️ Please enter your name to upload your score to the leaderboard.';
-      }
-      return;
-    }
-
-    if (authenticatedPlayer && !googleIdToken) {
-      if (statusMsg) {
-        statusMsg.style.color = '#fde047';
-        statusMsg.textContent = 'Sign in again to verify your email for certificate delivery. Click your titlebar profile to continue.';
       }
       return;
     }
@@ -1921,11 +1915,6 @@
         }
         statusMsg.innerHTML = msg;
       } else {
-        if (certRes.status === 401) {
-          googleIdToken = null;
-          sessionStorage.removeItem(AUTH_ID_TOKEN_KEY);
-          renderAuthProfile();
-        }
         if (lootLockerSuccess) {
           statusMsg.style.color = '#fde047';
           statusMsg.textContent = `Score uploaded to LootLocker${playerRank ? ` (Rank #${playerRank})` : ''}, but certificate delivery failed: ${certData.error || 'unknown error'}`;

@@ -15,6 +15,58 @@ async function verifyGoogleIdToken(idToken, clientId) {
   return profile;
 }
 
+async function createLootLockerGoogleSession(idToken, gameKey) {
+  if (typeof idToken !== 'string' || !idToken.trim()) {
+    return { data: null, error: 'Google did not return an ID token. Sign in again and retry.', status: 400 };
+  }
+  if (typeof gameKey !== 'string' || !gameKey.trim()) {
+    return { data: null, error: 'LootLocker is not configured for this Worker environment.', status: 503 };
+  }
+
+  const response = await fetch('https://api.lootlocker.com/game/session/google', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'LL-Version': '2021-03-01',
+    },
+    body: JSON.stringify({
+      game_key: gameKey,
+      id_token: idToken,
+      game_version: '1.0.0',
+      platform: 'web',
+    }),
+  });
+  const responseText = await response.text();
+  let data = {};
+  try {
+    const parsedData = JSON.parse(responseText);
+    if (parsedData && typeof parsedData === 'object' && !Array.isArray(parsedData)) data = parsedData;
+  } catch {
+    // Preserve the upstream status when the response body is empty or not JSON.
+  }
+
+  if (!response.ok || !data.session_token) {
+    const providerError = typeof data.error === 'string'
+      ? data.error
+      : data.error && typeof data.error.message === 'string'
+        ? data.error.message
+        : '';
+    const providerMessage = [data.message, data.error_description, data.detail, providerError]
+      .find((value) => typeof value === 'string' && value.trim());
+    const safeMessage = providerMessage
+      ? providerMessage.trim().replaceAll(idToken, '[redacted]').replaceAll(gameKey, '[redacted]').slice(0, 240)
+      : 'LootLocker returned an empty or invalid response.';
+    console.error('LootLocker Google session rejected:', response.status, safeMessage);
+    return {
+      data,
+      error: `LootLocker rejected the Google session (HTTP ${response.status}): ${safeMessage}`,
+      status: response.status,
+    };
+  }
+
+  return { data, error: null, status: response.status };
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -67,18 +119,10 @@ export default {
         const playerName = typeof profile.name === 'string' && profile.name.trim()
           ? profile.name.trim()
           : profile.email;
-        const lootLockerRes = await fetch('https://api.lootlocker.com/game/v2/session/custom', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            game_key: env.LOOTLOCKER_API_KEY,
-            game_version: '1.0.0',
-            player_identifier: `g_${profile.sub}`,
-          }),
-        });
-        const lootLockerData = await lootLockerRes.json();
-        if (!lootLockerRes.ok || !lootLockerData.session_token) {
-          return new Response(JSON.stringify({ error: 'Unable to create a persistent LootLocker session.' }), {
+        const lootLockerSession = await createLootLockerGoogleSession(idToken, env.LOOTLOCKER_API_KEY);
+        const lootLockerData = lootLockerSession.data;
+        if (lootLockerSession.error) {
+          return new Response(JSON.stringify({ error: lootLockerSession.error }), {
             status: 502,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
@@ -116,7 +160,7 @@ export default {
       }
     }
 
-    // --- LootLocker: start a custom persistent session or an anonymous guest session ---
+    // --- LootLocker: start a Google-backed persistent session or an anonymous guest session ---
     if (url.pathname === '/api/lootlocker/session' && request.method === 'POST') {
       try {
         let body = {};
@@ -144,19 +188,28 @@ export default {
             });
           }
         }
-        const isCustomSession = Boolean(playerIdentifier);
-        const res = await fetch(`https://api.lootlocker.com/game/v2/session/${isCustomSession ? 'custom' : 'guest'}`, {
+        if (playerIdentifier) {
+          const session = await createLootLockerGoogleSession(body.idToken, env.LOOTLOCKER_API_KEY);
+          return new Response(JSON.stringify(session.error ? { error: session.error } : session.data), {
+            status: session.error ? 502 : session.status,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        if (!env.LOOTLOCKER_API_KEY) {
+          return new Response(JSON.stringify({ error: 'LootLocker is not configured.' }), {
+            status: 503,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const guestResponse = await fetch('https://api.lootlocker.com/game/v2/session/guest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            game_key: env.LOOTLOCKER_API_KEY,
-            game_version: '1.0.0',
-            ...(isCustomSession ? { player_identifier: playerIdentifier } : {}),
-          }),
+          body: JSON.stringify({ game_key: env.LOOTLOCKER_API_KEY, game_version: '1.0.0' }),
         });
-        const data = await res.text();
-        return new Response(data, {
-          status: res.status,
+        return new Response(await guestResponse.text(), {
+          status: guestResponse.status,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (err) {

@@ -6,6 +6,7 @@
   "observability": {
     "enabled": true
   },
+  // Only public, non-sensitive configuration belongs in vars. Store API keys as Worker secrets.
   // Set GOOGLE_CLIENT_ID to the OAuth web client ID in each Cloudflare environment.
   // Also copy that public ID into index.html's google-client-id meta tag for GIS.
   // Register the GitHub Pages, Worker, localhost:8000, and localhost:8787 origins in Google Cloud.
